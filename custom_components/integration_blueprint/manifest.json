@@ -2,11 +2,11 @@
   "domain": "integration_blueprint",
   "name": "Integration blueprint",
   "codeowners": [
-    "@ludeeus"
+    "@sleiner"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/ludeeus/integration_blueprint",
+  "documentation": "https://github.com/sleiner/ha_enocoo",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/ludeeus/integration_blueprint/issues",
+  "issue_tracker": "https://github.com/sleiner/ha_enocoo/issues",
   "version": "0.0.0"
 }
