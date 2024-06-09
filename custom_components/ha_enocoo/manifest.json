@@ -1,5 +1,5 @@
 {
-  "domain": "integration_blueprint",
+  "domain": "ha_enocoo",
   "name": "Integration blueprint",
   "codeowners": [
     "@sleiner"
