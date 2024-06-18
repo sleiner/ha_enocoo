@@ -10,9 +10,7 @@
 
 Platform | Description
 -- | --
-`binary_sensor` | Show something `True` or `False`.
-`sensor` | Show info from blueprint API.
-`switch` | Switch something `True` or `False`.
+`sensor` | Shows the current status of the energy "traffic light".
 
 ## Installation
 
