@@ -24,3 +24,9 @@ keep-runtime-typing = true
 
 [lint.mccabe]
 max-complexity = 25
+
+[lint.per-file-ignores]
+"tests/**" = [
+    "D104", # we do not need module docstrings for the tests
+    "S101", # assert is allowed in tests
+]

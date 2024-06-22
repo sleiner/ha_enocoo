@@ -1,32 +1,31 @@
 name: "Lint"
 
 on:
-  push:
-    branches:
-      - "main"
-  pull_request:
-    branches:
-      - "main"
+    push:
+        branches:
+            - "main"
+    pull_request:
+        branches:
+            - "main"
 
 jobs:
-  ruff:
-    name: "Ruff"
-    runs-on: "ubuntu-latest"
-    steps:
-        - name: "Checkout the repository"
-          uses: "actions/checkout@v4"
+    ruff:
+        name: "Ruff"
+        runs-on: "ubuntu-latest"
+        steps:
+            - name: "Checkout the repository"
+              uses: "actions/checkout@v4"
 
-        - name: "Set up Python"
-          uses: actions/setup-python@v5.1.0
-          with:
-            python-version: "3.12"
-            cache: "pip"
+            - name: "Set up PDM"
+              uses: pdm-project/setup-pdm@main
+              with:
+                  cache: true
 
-        - name: "Install requirements"
-          run: python3 -m pip install -r requirements.txt
+            - name: "Install dependencies"
+              run: pdm sync
 
-        - name: "Lint"
-          run: python3 -m ruff check .
+            - name: "Lint"
+              run: pdm run ruff check .
 
-        - name: "Format"
-          run: python3 -m ruff format . --check
+            - name: "Format"
+              run: pdm run ruff format . --check

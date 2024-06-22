@@ -1,0 +1,23 @@
+[project]
+name = "ha_enocoo"
+version = "0.0.0"
+description = "Custom Home Assistant integration for enocoo"
+authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = { text = "MIT" }
+dependencies = []
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "homeassistant==2024.6.0",
+    "pytest>=8.2.2",
+    "ruff>=0.4.10",
+]
+
+[tool.pdm.build]
+package-dir = "custom_components"
