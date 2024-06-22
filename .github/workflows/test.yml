@@ -1,0 +1,30 @@
+---
+name: Test
+
+on:
+    pull_request:
+    push:
+        branches:
+            - master
+            - main
+
+jobs:
+    pytest:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                python-version: ["3.12"]
+                os: [ubuntu-latest, macOS-latest, windows-latest]
+
+        steps:
+            - name: "Checkout the repository"
+              uses: actions/checkout@v4
+            - name: Set up PDM
+              uses: pdm-project/setup-pdm@main
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  cache: true
+            - name: Install dependencies
+              run: pdm sync
+            - name: Run Tests
+              run: pdm run pytest --verbose
