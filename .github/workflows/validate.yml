@@ -35,3 +35,16 @@ jobs:
             category: "integration"
             # Remove this 'ignore' key when you have added brand images for your integration to https://github.com/home-assistant/brands
             ignore: "brands"
+  
+  lockfile:
+    name: "Ensure that pdm.lock is up to date"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout the repository"
+        uses: actions/checkout@v4
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@main
+        with:
+            cache: true
+      - name: Check if pdm.lock matches pyproject.toml
+        run: pdm lock --check
