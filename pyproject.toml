@@ -6,7 +6,9 @@ authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
 requires-python = "==3.12.*"
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = []
+dependencies = [
+    "oocone==0.1",
+]
 
 [build-system]
 requires = ["pdm-backend"]

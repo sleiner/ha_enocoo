@@ -6,20 +6,27 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import oocone
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
 
-    from .api import IntegrationBlueprintApiClient
-    from .coordinator import BlueprintDataUpdateCoordinator
+    from .coordinator import EnocooUpdateCoordinator
 
 
-type IntegrationBlueprintConfigEntry = ConfigEntry[IntegrationBlueprintData]
+type EnocooConfigEntry = ConfigEntry[EnocooRuntimeData]
 
 
 @dataclass
-class IntegrationBlueprintData:
-    """Data for the Blueprint integration."""
+class EnocooRuntimeData:
+    """Data for the enocoo integration."""
 
-    client: IntegrationBlueprintApiClient
-    coordinator: BlueprintDataUpdateCoordinator
+    client: oocone.Enocoo
+    coordinator: EnocooUpdateCoordinator
     integration: Integration
+
+
+@dataclass
+class EnocooDashboardData:
+    """Data read from the enocoo dashboard."""
+
+    traffic_light_status: oocone.types.TrafficLightStatus

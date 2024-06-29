@@ -5,7 +5,8 @@
                 "description": "If you need help with the configuration have a look here: https://github.com/sleiner/ha_enocoo",
                 "data": {
                     "username": "Username",
-                    "password": "Password"
+                    "password": "Password",
+                    "url": "URL to the enocoo dashboard"
                 }
             }
         },
@@ -13,6 +14,19 @@
             "auth": "Username/Password is wrong.",
             "connection": "Unable to connect to the server.",
             "unknown": "Unknown error occurred."
+        }
+    },
+    "entity": {
+        "sensor": {
+            "traffic_light": {
+                "name": "Energy traffic light",
+                "state": {
+                    "red": "red",
+                    "yellow": "yellow",
+                    "green": "green",
+                    "unavailable": "unavailable"
+                }
+            }
         }
     }
 }
