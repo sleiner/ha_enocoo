@@ -6,9 +6,9 @@
 
 **This integration will set up the following platforms.**
 
-Platform | Description
--- | --
-`sensor` | Shows the current status of the energy "traffic light".
+| Platform | Description                                             |
+| -------- | ------------------------------------------------------- |
+| `sensor` | Shows the current status of the energy "traffic light". |
 
 ## Installation
 
@@ -24,7 +24,7 @@ Platform | Description
 
 <!---->
 
-***
+---
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/sleiner/ha_enocoo.svg?style=for-the-badge
 [commits]: https://github.com/sleiner/ha_enocoo/commits/main
