@@ -39,11 +39,12 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> EnocooDashboardData:
         """Update data via library."""
-        client = self.config_entry.runtime_data.client
+        client: oocone.Enocoo = self.config_entry.runtime_data.client
 
         try:
             dashboard_data = EnocooDashboardData(
                 traffic_light_status=await client.get_traffic_light_status(),
+                meter_table=await client.get_meter_table(),
             )
         except oocone.errors.AuthenticationFailed as exception:
             raise ConfigEntryAuthFailed(exception) from exception

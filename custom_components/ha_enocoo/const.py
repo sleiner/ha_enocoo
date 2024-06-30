@@ -1,8 +1,11 @@
 """Constants for enocoo."""
 
 from logging import Logger, getLogger
+from typing import Final
 
 LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "ha_enocoo"
-ATTRIBUTION = "Data provided by https://enocoo.com"
+
+ATTR_READOUT_TIME: Final = "readout_time"
+ATTR_ENOCOO_AREA: Final = "enocoo_area"
