@@ -30,3 +30,4 @@ class EnocooDashboardData:
     """Data read from the enocoo dashboard."""
 
     traffic_light_status: oocone.types.TrafficLightStatus
+    meter_table: list[oocone.types.MeterStatus]

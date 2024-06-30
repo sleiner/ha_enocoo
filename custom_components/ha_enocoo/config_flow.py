@@ -7,6 +7,7 @@ from homeassistant import config_entries, data_entry_flow
 from homeassistant.const import CONF_PASSWORD, CONF_URL, CONF_USERNAME
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.util import dt as dt_util
 from oocone import Auth, Enocoo, errors
 
 from .const import DOMAIN, LOGGER
@@ -84,5 +85,6 @@ class EnocooFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 password=password,
                 websession=async_create_clientsession(self.hass),
             ),
+            timezone=dt_util.get_default_time_zone(),
         )
-        await client.get_traffic_light_status()
+        await client.get_meter_table()

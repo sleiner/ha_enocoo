@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:e76ca8d3b9f39adfec127e365112647c95165671fd69ce4e99bb0eeee968a186"
+content_hash = "sha256:108fb3b3ec65f3b1779b4082051b776f45056e824c7c575ca797684b204aa92e"
 
 [[package]]
 name = "acme"
@@ -993,17 +993,17 @@ files = [
 
 [[package]]
 name = "oocone"
-version = "0.1"
+version = "0.2.1"
 requires_python = ">=3.11"
 summary = "Unofficial library for interacting with an enocoo energy management system"
 groups = ["default"]
 dependencies = [
-    "aiohttp>=3.9.4",
+    "aiohttp>=3.9.5",
     "beautifulsoup4>=4.12.3",
 ]
 files = [
-    {file = "oocone-0.1-py3-none-any.whl", hash = "sha256:6586496c9df0780b02336dea6f139a5bb3e12c0f7e2cca578fae86bcc18c91a5"},
-    {file = "oocone-0.1.tar.gz", hash = "sha256:d475ffafcfede5f5eb0058c336772b365ff6453c7851194911c1054746d70c3e"},
+    {file = "oocone-0.2.1-py3-none-any.whl", hash = "sha256:e87673b7b3eaaa79e0d34a306a951001139598b31b2a2fe2760176b4ca1acc7f"},
+    {file = "oocone-0.2.1.tar.gz", hash = "sha256:87f12e879ec0ff8bfac5d28822d215558ab879e9a0747c56d24ef9c51d55f433"},
 ]
 
 [[package]]

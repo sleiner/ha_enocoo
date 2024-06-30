@@ -6,9 +6,9 @@
 
 **This integration will set up the following platforms.**
 
-| Platform | Description                                             |
-| -------- | ------------------------------------------------------- |
-| `sensor` | Shows the current status of the energy "traffic light". |
+| Platform | Description                                                                           |
+| -------- | ------------------------------------------------------------------------------------- |
+| `sensor` | Shows the current status of the energy "traffic light" as well as the utility meters. |
 
 ## Installation
 

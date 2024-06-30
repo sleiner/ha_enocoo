@@ -16,8 +16,23 @@
             "unknown": "Unknown error occurred."
         }
     },
+    "device": {
+        "meter_with_id": {
+            "name": "Meter #{meter_id}"
+        }
+    },
     "entity": {
         "sensor": {
+            "meter": {
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "readout_time": {
+                        "name": "meter readout time"
+                    }
+                }
+            },
             "traffic_light": {
                 "name": "Energy traffic light",
                 "state": {
