@@ -5,6 +5,9 @@
     "@sleiner"
   ],
   "config_flow": true,
+  "dependencies": [
+    "recorder"
+  ],
   "documentation": "https://github.com/sleiner/ha_enocoo",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/sleiner/ha_enocoo/issues",
@@ -12,7 +15,7 @@
     "oocone"
   ],
   "requirements": [
-    "oocone==0.2.1"
+    "oocone==0.3.0"
   ],
   "version": "0.0.0"
 }
