@@ -652,7 +652,7 @@ version = "3.0.3"
 requires_python = ">=3.7"
 summary = "Lightweight in-process concurrent programming"
 groups = ["dev"]
-marker = "platform_machine == \"win32\" or platform_machine == \"WIN32\" or platform_machine == \"AMD64\" or platform_machine == \"amd64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"aarch64\""
+marker = "(platform_machine == \"win32\" or platform_machine == \"WIN32\" or platform_machine == \"AMD64\" or platform_machine == \"amd64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"aarch64\") and python_version < \"3.13\""
 files = [
     {file = "greenlet-3.0.3-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:70fb482fdf2c707765ab5f0b6655e9cfcf3780d8d87355a063547b41177599be"},
     {file = "greenlet-3.0.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d4d1ac74f5c0c0524e4a24335350edad7e5f03b9532da7ea4d3c54d527784f2e"},
@@ -1600,7 +1600,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 files = [
     {file = "winrt_runtime-2.1.0-cp312-cp312-win32.whl", hash = "sha256:fd3d29c0d11a4afb46357dca7d8a6be22018c7bc77139c71721f4aa85beadea4"},
     {file = "winrt_runtime-2.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:9845dad4de05794acf46387cbde1497755b4c01ba224ab846cbd8b65fba6c5d3"},
@@ -1614,7 +1614,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
@@ -1631,7 +1631,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
@@ -1648,7 +1648,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
@@ -1665,7 +1665,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
@@ -1682,7 +1682,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
@@ -1699,7 +1699,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
@@ -1716,7 +1716,7 @@ version = "2.1.0"
 requires_python = "<3.13,>=3.9"
 summary = "Python projection of Windows Runtime (WinRT) APIs"
 groups = ["dev"]
-marker = "platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" and python_version >= \"3.12\""
 dependencies = [
     "winrt-runtime==2.1.0",
 ]
