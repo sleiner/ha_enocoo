@@ -1,0 +1,47 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Für Hilfe bei der Konfiguration, siehe: https://github.com/sleiner/ha_enocoo",
+                "data": {
+                    "username": "Benutzername",
+                    "password": "Passwort",
+                    "url": "URL zum enocoo-Portal"
+                }
+            }
+        },
+        "error": {
+            "auth": "Benutzername oder Passwort ist falsch.",
+            "connection": "Verbindung zum Server fehlgeschlagen.",
+            "unknown": "Unbekannter Fehler."
+        }
+    },
+    "device": {
+        "meter_with_id": {
+            "name": "Zähler #{meter_id}"
+        }
+    },
+    "entity": {
+        "sensor": {
+            "meter": {
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Zugeordnete Fläche im enocoo-Dashboard"
+                    },
+                    "readout_time": {
+                        "name": "Auslesezeitpunkt"
+                    }
+                }
+            },
+            "traffic_light": {
+                "name": "Energieampel",
+                "state": {
+                    "red": "rot",
+                    "yellow": "gelb",
+                    "green": "grün",
+                    "unavailable": "unbekannt"
+                }
+            }
+        }
+    }
+}

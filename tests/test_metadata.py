@@ -65,3 +65,11 @@ def test_name_in_sync(hacs_json: dict, manifest_json: dict) -> None:
     ), "The integration is named differently in hacs.json and manifest.json"
 
     # The name in pyproject.toml is allowed to be different
+
+
+def test_dependencies_in_sync(manifest_json: dict, pyproject_toml: dict) -> None:
+    """The requirements must be the same inside pyproject.toml and manifest.json."""
+    reqs_from_manifest_json = set(manifest_json["requirements"])
+    reqs_from_pyproject_toml = set(pyproject_toml["project"]["dependencies"])
+
+    assert reqs_from_manifest_json == reqs_from_pyproject_toml

@@ -4,13 +4,11 @@
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 
-![Project Maintenance][maintenance-shield]
-
 **This integration will set up the following platforms.**
 
-Platform | Description
--- | --
-`sensor` | Shows the current status of the energy "traffic light".
+| Platform | Description                                                                           |
+| -------- | ------------------------------------------------------------------------------------- |
+| `sensor` | Shows the current status of the energy "traffic light" as well as the utility meters. |
 
 ## Installation
 
@@ -26,11 +24,10 @@ Platform | Description
 
 <!---->
 
-***
+---
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/sleiner/ha_enocoo.svg?style=for-the-badge
 [commits]: https://github.com/sleiner/ha_enocoo/commits/main
 [license-shield]: https://img.shields.io/github/license/sleiner/ha_enocoo.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-Joakim%20Sørensen%20%40ludeeus-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/sleiner/ha_enocoo.svg?style=for-the-badge
 [releases]: https://github.com/sleiner/ha_enocoo/releases
