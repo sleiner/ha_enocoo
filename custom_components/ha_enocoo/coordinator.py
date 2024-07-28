@@ -40,6 +40,8 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: EnocooConfigEntry,
+        enocoo: oocone.enocoo,
     ) -> None:
         """Initialize."""
         super().__init__(
@@ -49,18 +51,18 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
             update_interval=dt.timedelta(minutes=15),
             always_update=False,
         )
-        self.statistics_inserter = StatisticsInserter(self.hass, self.config_entry)
-
-    @property
-    def _enocoo(self) -> oocone.Enocoo:
-        return self.config_entry.runtime_data.client
+        self.config_entry = config_entry
+        self.enocoo = enocoo
+        self.statistics_inserter = StatisticsInserter(
+            self.hass, self.enocoo, self.config_entry
+        )
 
     async def _async_update_data(self) -> EnocooDashboardData:
         """Update data via library."""
         try:
             dashboard_data = EnocooDashboardData(
-                traffic_light_status=await self._enocoo.get_traffic_light_status(),
-                meter_table=await self._enocoo.get_meter_table(),
+                traffic_light_status=await self.enocoo.get_traffic_light_status(),
+                meter_table=await self.enocoo.get_meter_table(),
             )
         except oocone.errors.AuthenticationFailed as exception:
             raise ConfigEntryAuthFailed(exception) from exception
@@ -74,15 +76,17 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
 class StatisticsInserter:
     """Inserts historical data into the recorder component of Home Assistant."""
 
-    def __init__(self, hass: HomeAssistant, config_entry: EnocooConfigEntry) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        enocoo: oocone.Enocoo,
+        config_entry: EnocooConfigEntry,
+    ) -> None:
         """Initialize."""
         self.hass = hass
+        self.enocoo = enocoo
         self.config_entry = config_entry
         self.insertion_in_progress = Lock()
-
-    @property
-    def _enocoo(self) -> oocone.Enocoo:
-        return self.config_entry.runtime_data.client
 
     async def trigger_insertion(self) -> None:
         """Trigger the collection and insertion of statistics."""
@@ -91,7 +95,7 @@ class StatisticsInserter:
 
     async def _insert_statistics(self) -> None:
         async with self.insertion_in_progress:
-            for area_id in await self._enocoo.get_area_ids():
+            for area_id in await self.enocoo.get_area_ids():
                 for consumption_type in ConsumptionType:
                     await self._insert_individual_consumption_statistics(
                         area_id=area_id, consumption_type=consumption_type
@@ -156,7 +160,7 @@ class StatisticsInserter:
                 date += dt.timedelta(1)
 
         async for date in get_dates_to_query():
-            all_reads = await self._enocoo.get_individual_consumption(
+            all_reads = await self.enocoo.get_individual_consumption(
                 consumption_type=consumption_type,
                 during=date,
                 interval="day",
@@ -243,7 +247,7 @@ class StatisticsInserter:
             2000,
             -1,
         ):
-            yearly_readings = await self._enocoo.get_individual_consumption(
+            yearly_readings = await self.enocoo.get_individual_consumption(
                 consumption_type,
                 during=dt.date(year, 1, 1),
                 interval="year",
@@ -261,7 +265,7 @@ class StatisticsInserter:
         earliest_month = min(c.start.month for c in earliest_year_readings)
         date = dt.date(earliest_year, earliest_month, 1)
         while date.month == earliest_month:
-            daily_readings = await self._enocoo.get_individual_consumption(
+            daily_readings = await self.enocoo.get_individual_consumption(
                 consumption_type, during=date, interval="day", area_id=area_id
             )
 

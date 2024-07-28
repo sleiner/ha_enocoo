@@ -34,19 +34,18 @@ async def async_setup_entry(
     entry: EnocooConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    coordinator = EnocooUpdateCoordinator(
-        hass=hass,
-    )
-    entry.runtime_data = EnocooRuntimeData(
-        client=Enocoo(
-            Auth(
-                base_url=entry.data[CONF_URL],
-                username=entry.data[CONF_USERNAME],
-                password=entry.data[CONF_PASSWORD],
-                websession=async_get_clientsession(hass),
-            ),
-            timezone=dt_util.get_default_time_zone(),
+    enocoo = Enocoo(
+        Auth(
+            base_url=entry.data[CONF_URL],
+            username=entry.data[CONF_USERNAME],
+            password=entry.data[CONF_PASSWORD],
+            websession=async_get_clientsession(hass),
         ),
+        timezone=dt_util.get_default_time_zone(),
+    )
+    coordinator = EnocooUpdateCoordinator(hass=hass, config_entry=entry, enocoo=enocoo)
+    entry.runtime_data = EnocooRuntimeData(
+        client=enocoo,
         integration=async_get_loaded_integration(hass, entry.domain),
         coordinator=coordinator,
     )
