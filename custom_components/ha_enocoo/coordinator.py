@@ -210,7 +210,7 @@ class StatisticsInserter:
             f"{self.config_entry.entry_id}_"
             f"{area_id}_"
             f"{consumption_type}"
-        )
+        ).lower()
         LOGGER.debug(
             "Statistics ID for %s in area %s: %s",
             consumption_type,
