@@ -13,7 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from ha_enocoo.const import ATTR_ENOCOO_AREA, ATTR_READOUT_TIME
+from custom_components.ha_enocoo.const import ATTR_ENOCOO_AREA, ATTR_READOUT_TIME
 
 from .entity import EnocooEntity
 
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
     from oocone.types import MeterStatus
 
-    from ha_enocoo.data import EnocooDashboardData
+    from custom_components.ha_enocoo.data import EnocooDashboardData
 
     from .coordinator import EnocooUpdateCoordinator
     from .data import EnocooConfigEntry
