@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:616cbea299e335fb8fa338d48c4deddbbb28fa8cebdb0dd6e8f6344683c344db"
+content_hash = "sha256:3a9750ffc1378abe2569aa4dfaaf6fc848d5e14f6e816ba6a123a00b99e49fd9"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -202,6 +202,20 @@ files = [
 ]
 
 [[package]]
+name = "async-lru"
+version = "2.0.4"
+requires_python = ">=3.8"
+summary = "Simple LRU cache for asyncio"
+groups = ["default"]
+dependencies = [
+    "typing-extensions>=4.0.0; python_version < \"3.11\"",
+]
+files = [
+    {file = "async-lru-2.0.4.tar.gz", hash = "sha256:b8a59a5df60805ff63220b2a0c5b5393da5521b113cd5465a44eb037d81a5627"},
+    {file = "async_lru-2.0.4-py3-none-any.whl", hash = "sha256:ff02944ce3c288c5be660c42dbcca0742b32c3b279d6dceda655190240b99224"},
+]
+
+[[package]]
 name = "async-timeout"
 version = "4.0.3"
 requires_python = ">=3.7"
@@ -381,7 +395,7 @@ files = [
 
 [[package]]
 name = "bluetooth-data-tools"
-version = "1.19.3"
+version = "1.19.4"
 requires_python = "<4.0,>=3.10"
 summary = "Tools for converting bluetooth data and packets"
 groups = ["dev"]
@@ -389,35 +403,35 @@ dependencies = [
     "cryptography>=41.0.3",
 ]
 files = [
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:39eac88dc047d4deaad52657aca97e1f4a8c57413c50b1dce86ebc4458bc9416"},
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:854cdaa0531e98baf4b6e5f34813a122791a4765f38106bdef8b39a0363196dd"},
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2b9e1881589c92b02746f95237666587e3c7582cc12a771591a7c8c2fedfc426"},
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:1b118b2a6d8cb2260cd85851149a9cac7c40148445340296e240b1487077ba2b"},
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:000590ef4d711fd5d9063663d4dc9c2089027bb95db894f762a4c4adde8cd92b"},
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-win32.whl", hash = "sha256:0785202f61b3ee9f610256678888f4f4ac4b20a2b751a1776da814e01f062b27"},
-    {file = "bluetooth_data_tools-1.19.3-cp312-cp312-win_amd64.whl", hash = "sha256:87baf4a65211d15e3eaccde4e866877455892e95d42f6fd12a009f7c680161e4"},
-    {file = "bluetooth_data_tools-1.19.3.tar.gz", hash = "sha256:b443eede81a30e3222c85c116279d83ea90468e8def49e1105d43b430ecffc23"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:c7aa15f9bedc14abda2eb6aad207c81a95e22a360329f9d0bf7d4df1ce7ea757"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:bb9341b9e54cec1bbeb6d63a49054a1c3e3a1cc09cb60e20aba947edabab23cf"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:45afde56e6b537f3db66c61385851fb7d4e37e435a60da02ed3c078abcdcbf63"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:02033c93ba0696e323690fbd7fd439a9eb5cef9ffd621fffd87e7c078f73f964"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:b15b63099ba53ee821aff08c62ac6076a0b111bead98df5a5e50ab0997ef7a39"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-win32.whl", hash = "sha256:34eee2a99f116eb52744596156b586c0c009efe19c9dbae69f14cf6dc5c67326"},
+    {file = "bluetooth_data_tools-1.19.4-cp312-cp312-win_amd64.whl", hash = "sha256:27f7053c952f8c873a62320fd0743ba5b7951c8c27de2b36a69f7f307c908de5"},
+    {file = "bluetooth_data_tools-1.19.4.tar.gz", hash = "sha256:534bbd927efd9a49c5065f0d0b8ee78d38f5fd815f7230c0bb596881bf6f82af"},
 ]
 
 [[package]]
 name = "boto3"
-version = "1.34.149"
+version = "1.34.150"
 requires_python = ">=3.8"
 summary = "The AWS SDK for Python"
 groups = ["dev"]
 dependencies = [
-    "botocore<1.35.0,>=1.34.149",
+    "botocore<1.35.0,>=1.34.150",
     "jmespath<2.0.0,>=0.7.1",
     "s3transfer<0.11.0,>=0.10.0",
 ]
 files = [
-    {file = "boto3-1.34.149-py3-none-any.whl", hash = "sha256:11edeeacdd517bda3b7615b754d8440820cdc9ddd66794cc995a9693ddeaa3be"},
-    {file = "boto3-1.34.149.tar.gz", hash = "sha256:f4e6489ba9dc7fb37d53e0e82dbc97f2cb0a4969ef3970e2c88b8f94023ae81a"},
+    {file = "boto3-1.34.150-py3-none-any.whl", hash = "sha256:ad648c89a4935590a69341e5430fc42a021489a22de171ee3fd7bb204f9ef0fa"},
+    {file = "boto3-1.34.150.tar.gz", hash = "sha256:894b222f7850b870a7ac63d7e378ac36c5c34375da24ddc30e131d9fafe369dc"},
 ]
 
 [[package]]
 name = "botocore"
-version = "1.34.149"
+version = "1.34.150"
 requires_python = ">=3.8"
 summary = "Low-level, data-driven core of boto 3."
 groups = ["dev"]
@@ -428,8 +442,8 @@ dependencies = [
     "urllib3<1.27,>=1.25.4; python_version < \"3.10\"",
 ]
 files = [
-    {file = "botocore-1.34.149-py3-none-any.whl", hash = "sha256:ae6c4be52eeee96f68c116b27d252bab069cd046d61a17cfe8e9da411cf22906"},
-    {file = "botocore-1.34.149.tar.gz", hash = "sha256:2e1eb5ef40102a3d796bb3dd05f2ac5e8fb43fe1ff114b4f6d33153437f5a372"},
+    {file = "botocore-1.34.150-py3-none-any.whl", hash = "sha256:b988d47f4d502df85befce11a48002421e4e6ea4289997b5e0261bac5fa76ce6"},
+    {file = "botocore-1.34.150.tar.gz", hash = "sha256:4d23387e0f076d87b637a2a35c0ff2b8daca16eace36b63ce27f65630c6b375a"},
 ]
 
 [[package]]
@@ -963,7 +977,7 @@ files = [
 
 [[package]]
 name = "oocone"
-version = "0.3.0"
+version = "0.3.1"
 requires_python = ">=3.11"
 summary = "Unofficial library for interacting with an enocoo energy management system"
 groups = ["default"]
@@ -972,8 +986,8 @@ dependencies = [
     "beautifulsoup4>=4.12.3",
 ]
 files = [
-    {file = "oocone-0.3.0-py3-none-any.whl", hash = "sha256:b232aa9bccc59e93fad4567a10c890db478fa0c6eaa7099f4be1e93bab8af7ee"},
-    {file = "oocone-0.3.0.tar.gz", hash = "sha256:b5b19c8b488acfbb23ed8c9d5e38ad1f96a7bae799caca03b06a550ea648a581"},
+    {file = "oocone-0.3.1-py3-none-any.whl", hash = "sha256:52e2fd12b55ea8b8f9286e84ccfdaaa6931ac4ff57e0115abfffecdf72e4ed85"},
+    {file = "oocone-0.3.1.tar.gz", hash = "sha256:8387e86cfc82c79416599ebec233a04ba791a0dd6a7cc0ed771ddb044ee864b0"},
 ]
 
 [[package]]
@@ -1029,13 +1043,13 @@ files = [
 
 [[package]]
 name = "pip"
-version = "24.1.2"
+version = "24.2"
 requires_python = ">=3.8"
 summary = "The PyPA recommended tool for installing Python packages."
 groups = ["dev"]
 files = [
-    {file = "pip-24.1.2-py3-none-any.whl", hash = "sha256:7cd207eed4c60b0f411b444cd1464198fe186671c323b6cd6d433ed80fc9d247"},
-    {file = "pip-24.1.2.tar.gz", hash = "sha256:e5458a0b89f2755e0ee8c0c77613fe5273e05f337907874d64f13171a898a7ff"},
+    {file = "pip-24.2-py3-none-any.whl", hash = "sha256:2cd581cf58ab7fcfca4ce8efa6dcacd0de5bf8d0a3eb9ec927e07405f4d9e2a2"},
+    {file = "pip-24.2.tar.gz", hash = "sha256:5b5e490b5e9cb275c879595064adce9ebd31b854e3e803740b72f9ccf34a45b8"},
 ]
 
 [[package]]
@@ -1393,13 +1407,13 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "71.1.0"
+version = "72.1.0"
 requires_python = ">=3.8"
 summary = "Easily download, build, install, upgrade, and uninstall Python packages"
 groups = ["dev"]
 files = [
-    {file = "setuptools-71.1.0-py3-none-any.whl", hash = "sha256:33874fdc59b3188304b2e7c80d9029097ea31627180896fb549c578ceb8a0855"},
-    {file = "setuptools-71.1.0.tar.gz", hash = "sha256:032d42ee9fb536e33087fb66cac5f840eb9391ed05637b3f2a76a7c8fb477936"},
+    {file = "setuptools-72.1.0-py3-none-any.whl", hash = "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1"},
+    {file = "setuptools-72.1.0.tar.gz", hash = "sha256:8d243eff56d095e5817f796ede6ae32941278f542e0f941867cc05ae52b162ec"},
 ]
 
 [[package]]

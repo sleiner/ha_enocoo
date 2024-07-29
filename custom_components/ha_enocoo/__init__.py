@@ -7,8 +7,10 @@ https://github.com/sleiner/ha_enocoo
 
 from __future__ import annotations
 
+import datetime as dt
 from typing import TYPE_CHECKING
 
+from async_lru import alru_cache
 from homeassistant.const import CONF_PASSWORD, CONF_URL, CONF_USERNAME, Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_loaded_integration
@@ -34,7 +36,7 @@ async def async_setup_entry(
     entry: EnocooConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    enocoo = Enocoo(
+    enocoo = CachedEnocoo(
         Auth(
             base_url=entry.data[CONF_URL],
             username=entry.data[CONF_USERNAME],
@@ -74,3 +76,12 @@ async def async_reload_entry(
     """Reload config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)
+
+
+class CachedEnocoo(Enocoo):
+    """Subclass of oocone.Enocoo with appropriate caching for our use case."""
+
+    get_area_ids = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_area_ids)
+    get_individual_consumption = alru_cache(ttl=dt.timedelta(minutes=14).seconds)(
+        Enocoo.get_individual_consumption
+    )
