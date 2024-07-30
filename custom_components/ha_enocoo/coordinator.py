@@ -117,6 +117,9 @@ class StatisticsInserter:
             last_stats_time = dt.datetime.fromtimestamp(
                 old_stats[statistic_id][0]["start"], tz=dt_util.get_default_time_zone()
             )
+            last_stats_end_time = dt.datetime.fromtimestamp(
+                old_stats[statistic_id][0]["end"], tz=dt_util.get_default_time_zone()
+            )
             last_stat = await get_instance(self.hass).async_add_executor_job(
                 statistics_during_period,
                 self.hass,
@@ -130,7 +133,21 @@ class StatisticsInserter:
             consumption_sum = cast(float, last_stat[statistic_id][0]["sum"])
         else:
             last_stats_time = None
+            last_stats_end_time = None
             consumption_sum = 0.0
+
+        now = dt.datetime.now(tz=dt_util.get_default_time_zone())
+        if last_stats_end_time and (now - last_stats_end_time) <= dt.timedelta(
+            minutes=75
+        ):
+            # Statistics for a full hour are available about 15 minutes after the hour
+            # has concluded.
+            LOGGER.debug(
+                "%s statistics for the next full hour are not yet available."
+                " Skipping statistics collection...",
+                consumption_type,
+            )
+            return
 
         async def get_dates_to_query() -> Generator[dt.date]:
             if last_stats_time is None:
@@ -154,7 +171,7 @@ class StatisticsInserter:
             else:
                 date = last_stats_time.date()
 
-            today = dt.datetime.now(tz=dt_util.get_default_time_zone()).date()
+            today = now.date()
             while date <= today:
                 yield date
                 date += dt.timedelta(1)
