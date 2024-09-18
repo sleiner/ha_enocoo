@@ -62,7 +62,9 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
         try:
             dashboard_data = EnocooDashboardData(
                 traffic_light_status=await self.enocoo.get_traffic_light_status(),
-                meter_table=await self.enocoo.get_meter_table(),
+                meter_table=await self.enocoo.get_meter_table(
+                    allow_previous_day_until=dt.time(23, 45)
+                ),
             )
         except oocone.errors.AuthenticationFailed as exception:
             raise ConfigEntryAuthFailed(exception) from exception
