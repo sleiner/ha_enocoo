@@ -4,5 +4,5 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-curl -sSL https://pdm-project.org/install-pdm.py | python3 -
-pdm sync
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync --frozen

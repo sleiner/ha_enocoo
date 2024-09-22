@@ -35,7 +35,7 @@ def test_home_assistant_version_in_sync(hacs_json: dict, pyproject_toml: dict) -
     """The homeassistant version hacs.json and pyproject.toml must be the same."""
     version_from_hacs_json = hacs_json["homeassistant"]
 
-    dev_dependencies = pyproject_toml["tool"]["pdm"]["dev-dependencies"]["dev"]
+    dev_dependencies = pyproject_toml["tool"]["uv"]["dev-dependencies"]
     prefix = "homeassistant=="
     version_from_pyproject_toml = next(
         dep.removeprefix(prefix) for dep in dev_dependencies if dep.startswith(prefix)

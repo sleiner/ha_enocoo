@@ -19,12 +19,18 @@ jobs:
         steps:
             - name: "Checkout the repository"
               uses: actions/checkout@v4
-            - name: Set up PDM
-              uses: pdm-project/setup-pdm@main
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v2
               with:
-                  python-version: ${{ matrix.python-version }}
-                  cache: true
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Install Python
+              run: uv python install ${{ matrix.python-version }}
+
             - name: Install dependencies
-              run: pdm sync
+              run: uv sync --all-extras --dev
+
             - name: Run Tests
-              run: pdm run pytest --verbose
+              run: uv run pytest --verbose
