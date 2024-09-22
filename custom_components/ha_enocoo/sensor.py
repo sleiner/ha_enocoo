@@ -152,13 +152,13 @@ class MeterEntity(EnocooEntity, SensorEntity):
     @property
     @override
     def native_unit_of_measurement(self) -> str:
-        return self._current_meter_status().unit
+        return self._current_meter_status().reading.unit
 
     @property
     @override
     def native_value(self) -> str | None:
         """Return the native value of the sensor."""
-        return self._current_meter_status().reading
+        return self._current_meter_status().reading.value
 
     @property
     @override
