@@ -33,7 +33,10 @@
                     }
                 }
             },
-            "traffic_light": {
+            "calculated_electricity_price": {
+                "name": "Kalkulierter Strompreis"
+            },
+            "energy_traffic_light": {
                 "name": "Energieampel",
                 "state": {
                     "red": "rot",
