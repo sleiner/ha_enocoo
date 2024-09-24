@@ -24,7 +24,6 @@ jobs:
               uses: astral-sh/setup-uv@v3
               with:
                   enable-cache: true
-                  cache-dependency-glob: "uv.lock"
 
             - name: Install Python
               run: uv python install ${{ matrix.python-version }}
