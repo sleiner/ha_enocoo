@@ -82,6 +82,6 @@ class CachedEnocoo(Enocoo):
     """Subclass of oocone.Enocoo with appropriate caching for our use case."""
 
     get_area_ids = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_area_ids)
-    get_individual_consumption = alru_cache(ttl=dt.timedelta(minutes=14).seconds)(
-        Enocoo.get_individual_consumption
-    )
+    _get_individual_consumption_uncompensated = alru_cache(
+        ttl=dt.timedelta(minutes=14).seconds
+    )(Enocoo._get_individual_consumption_uncompensated)  # noqa: SLF001
