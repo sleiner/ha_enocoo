@@ -271,6 +271,7 @@ class StatisticsInserter:
                 during=dt.date(year, 1, 1),
                 interval="year",
                 area_id=area_id,
+                compensate_off_by_one=False,
             )
             if len(yearly_readings) > 0:
                 earliest_year_readings = yearly_readings
