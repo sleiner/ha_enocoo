@@ -16,7 +16,7 @@
   ],
   "requirements": [
     "async-lru>=2.0.4",
-    "oocone==0.5.1"
+    "oocone==0.6.0"
   ],
   "version": "0.5.1"
 }
