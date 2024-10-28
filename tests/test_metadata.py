@@ -40,9 +40,9 @@ def test_home_assistant_version_in_sync(hacs_json: dict, pyproject_toml: dict) -
     version_from_pyproject_toml = next(
         dep.removeprefix(prefix) for dep in dev_dependencies if dep.startswith(prefix)
     )
-    assert (
-        version_from_hacs_json == version_from_pyproject_toml
-    ), "hacs.json and pyproject.toml reference different versions of Home Assistant"
+    assert version_from_hacs_json == version_from_pyproject_toml, (
+        "hacs.json and pyproject.toml reference different versions of Home Assistant"
+    )
 
 
 def test_integration_version_in_sync(manifest_json: dict, pyproject_toml: dict) -> None:
@@ -60,9 +60,9 @@ def test_name_in_sync(hacs_json: dict, manifest_json: dict) -> None:
     name_from_hacs_json = hacs_json["name"]
     name_from_manifest_json = manifest_json["name"]
 
-    assert (
-        name_from_hacs_json == name_from_manifest_json
-    ), "The integration is named differently in hacs.json and manifest.json"
+    assert name_from_hacs_json == name_from_manifest_json, (
+        "The integration is named differently in hacs.json and manifest.json"
+    )
 
     # The name in pyproject.toml is allowed to be different
 

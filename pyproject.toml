@@ -3,7 +3,7 @@ name = "ha_enocoo"
 version = "0.5.1"
 description = "Custom Home Assistant integration for enocoo"
 authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
-requires-python = "==3.12.*"
+requires-python = "==3.13.*"
 readme = "README.md"
 license = { text = "MIT" }
 dependencies = [
@@ -17,10 +17,13 @@ build-backend = "pdm.backend"
 
 [tool.uv]
 dev-dependencies = [
-    "homeassistant==2024.9.2",
+    "homeassistant==2025.2.1",
     "pytest>=8.3.3",
-    "ruff>=0.6.5",
+    "ruff>=0.7.1",
 ]
+
+[tool.uv.sources]
+oocone = { git = "https://github.com/sleiner/oocone" }
 
 [tool.pdm.build]
 package-dir = "custom_components"
