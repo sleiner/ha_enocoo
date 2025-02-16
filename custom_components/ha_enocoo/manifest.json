@@ -15,8 +15,7 @@
     "oocone"
   ],
   "requirements": [
-    "async-lru>=2.0.4",
-    "oocone==0.5.1"
+    "async-lru>=2.0.4"
   ],
   "version": "0.5.1"
 }
