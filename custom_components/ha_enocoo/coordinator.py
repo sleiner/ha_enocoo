@@ -226,15 +226,7 @@ class StatisticsInserter:
 
         async def get_dates_to_query() -> AsyncGenerator[dt.date]:
             if last_stats_time is None:
-                date = await self._find_earliest_consumption_statistics(
-                    consumption_type=consumption_type, area=area
-                )
-                if date is None:
-                    msg = (
-                        "Could not find individual consumption statistics"
-                        " on enocoo Dashboard."
-                    )
-                    raise UpdateFailed(msg)
+                date = area.data_available_since
 
                 LOGGER.info(
                     "No history for %s is recorded yet."
@@ -246,8 +238,13 @@ class StatisticsInserter:
             else:
                 date = last_stats_time.date()
 
-            today = now.date()
-            while date <= today:
+            newest_date_online = min(
+                now.date(),
+                # Areas are cached for about a day, so data_available_until might be a
+                # day behind. To compensate, we add a day.
+                area.data_available_until + dt.timedelta(days=1),
+            )
+            while date <= newest_date_online:
                 yield date
                 date += dt.timedelta(1)
 
@@ -418,25 +415,6 @@ class StatisticsInserter:
                 interval=interval, during=during
             )
             return [datapoint.start for datapoint in datapoints]
-
-        return await self._find_earliest_datapoint(get_timestamps)
-
-    async def _find_earliest_consumption_statistics(
-        self,
-        consumption_type: ConsumptionType,
-        area: Area,
-    ) -> dt.date | None:
-        async def get_timestamps(
-            interval: Literal["day", "month", "year"], during: dt.date
-        ) -> list[dt.datetime]:
-            readings = await self.enocoo.get_individual_consumption(
-                consumption_type,
-                during=during,
-                interval=interval,
-                area_id=area.id,
-                compensate_off_by_one=False,
-            )
-            return [reading.start for reading in readings]
 
         return await self._find_earliest_datapoint(get_timestamps)
 
