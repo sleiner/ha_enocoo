@@ -118,7 +118,7 @@ class StatisticsInserter:
     async def _insert_statistics(self) -> None:
         async with self.insertion_in_progress:
             for area in await self.enocoo.get_areas():
-                for consumption_type in ConsumptionType:
+                for consumption_type in self.__relevant_consumption_types(area):
                     await self._insert_individual_consumption_statistics(
                         area=area, consumption_type=consumption_type
                     )
@@ -132,6 +132,14 @@ class StatisticsInserter:
                 await self._insert_quarter_photovoltaic_statistics(
                     name, id_suffix, pv_attribute
                 )
+
+    @staticmethod
+    def __relevant_consumption_types(area: Area) -> list[ConsumptionType]:
+        if area.name.startswith("SP"):  # parking space, only electricity is available
+            relevant_consumption_types = [ConsumptionType.ELECTRICITY]
+        else:
+            relevant_consumption_types = list(ConsumptionType)
+        return relevant_consumption_types
 
     async def _find_last_stats(
         self, statistic_id: str, now: dt.datetime
