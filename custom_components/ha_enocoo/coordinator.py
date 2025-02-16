@@ -26,8 +26,8 @@ from oocone.model import (
     Quantity,
 )
 
-from ha_enocoo.const import DOMAIN, LOGGER
-from ha_enocoo.data import EnocooConfigEntry, EnocooDashboardData
+from .const import DOMAIN, LOGGER
+from .data import EnocooConfigEntry, EnocooDashboardData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
