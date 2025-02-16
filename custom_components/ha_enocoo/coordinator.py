@@ -18,7 +18,13 @@ from homeassistant.components.recorder.statistics import (
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
-from oocone.model import Consumption, ConsumptionType, PhotovoltaicSummary, Quantity
+from oocone.model import (
+    Area,
+    Consumption,
+    ConsumptionType,
+    PhotovoltaicSummary,
+    Quantity,
+)
 
 from .const import DOMAIN, LOGGER
 from .data import EnocooConfigEntry, EnocooDashboardData
@@ -111,10 +117,10 @@ class StatisticsInserter:
 
     async def _insert_statistics(self) -> None:
         async with self.insertion_in_progress:
-            for area_id in await self.enocoo.get_area_ids():
+            for area in await self.enocoo.get_areas():
                 for consumption_type in ConsumptionType:
                     await self._insert_individual_consumption_statistics(
-                        area_id=area_id, consumption_type=consumption_type
+                        area=area, consumption_type=consumption_type
                     )
 
             for name, id_suffix, pv_attribute in (
@@ -189,11 +195,9 @@ class StatisticsInserter:
         return True
 
     async def _insert_individual_consumption_statistics(
-        self, area_id: str, consumption_type: ConsumptionType
+        self, area: Area, consumption_type: ConsumptionType
     ) -> None:
-        statistic_id = self._statistic_id_individual_consumption(
-            area_id, consumption_type
-        )
+        statistic_id = self._statistic_id_individual_consumption(area, consumption_type)
         now = dt.datetime.now(tz=dt_util.get_default_time_zone())
         (
             last_stats_time,
@@ -215,7 +219,7 @@ class StatisticsInserter:
         async def get_dates_to_query() -> AsyncGenerator[dt.date]:
             if last_stats_time is None:
                 date = await self._find_earliest_consumption_statistics(
-                    consumption_type=consumption_type, area_id=area_id
+                    consumption_type=consumption_type, area=area
                 )
                 if date is None:
                     msg = (
@@ -244,7 +248,7 @@ class StatisticsInserter:
                 consumption_type=consumption_type,
                 during=date,
                 interval="day",
-                area_id=area_id,
+                area_id=area.id,
             )
 
             for unit, reads in groupby(all_reads, lambda read: read.unit):
@@ -268,7 +272,7 @@ class StatisticsInserter:
                     has_mean=False,
                     has_sum=True,
                     name=self._statistic_name_individual_consumption(
-                        area_id, consumption_type
+                        area, consumption_type
                     ),
                     source=DOMAIN,
                     statistic_id=statistic_id,
@@ -363,13 +367,13 @@ class StatisticsInserter:
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
 
     def _statistic_id_individual_consumption(
-        self, area_id: str, consumption_type: ConsumptionType
+        self, area: Area, consumption_type: ConsumptionType
     ) -> str:
-        statistic_id = self._statistic_id(suffix=f"{area_id}_{consumption_type}")
+        statistic_id = self._statistic_id(suffix=f"{area.id}_{consumption_type}")
         LOGGER.debug(
             "Statistics ID for %s in area %s: %s",
             consumption_type,
-            area_id,
+            area.id,
             statistic_id,
         )
         return statistic_id
@@ -380,7 +384,7 @@ class StatisticsInserter:
         )
 
     def _statistic_name_individual_consumption(
-        self, area_id: str, consumption_type: ConsumptionType
+        self, area: Area, consumption_type: ConsumptionType
     ) -> str:
         # Unfortunately, statistics names cannot be internationalized :/
         # Since this integration is mostly used in Germany, we use german names.
@@ -396,7 +400,7 @@ class StatisticsInserter:
         else:
             consumption_name = str(consumption_type)
 
-        return self._statistic_name(f"{area_id} {consumption_name}")
+        return f"{area.name} {consumption_name}"
 
     async def _find_earliest_photovoltaic_data(self) -> dt.date | None:
         async def get_timestamps(
@@ -412,7 +416,7 @@ class StatisticsInserter:
     async def _find_earliest_consumption_statistics(
         self,
         consumption_type: ConsumptionType,
-        area_id: str,
+        area: Area,
     ) -> dt.date | None:
         async def get_timestamps(
             interval: Literal["day", "month", "year"], during: dt.date
@@ -421,7 +425,7 @@ class StatisticsInserter:
                 consumption_type,
                 during=during,
                 interval=interval,
-                area_id=area_id,
+                area_id=area.id,
                 compensate_off_by_one=False,
             )
             return [reading.start for reading in readings]
@@ -434,7 +438,6 @@ class StatisticsInserter:
             [Literal["month"], dt.date], Coroutine[Any, Any, list[dt.datetime]]
         ],
     ) -> dt.date | None:
-        return dt.date(2025, 1, 30)
         today = dt.datetime.now(tz=dt_util.get_default_time_zone()).date()
         months = self.__months_between(dt.date(2000, 1, 1), today)
 

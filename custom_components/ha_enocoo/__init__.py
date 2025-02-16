@@ -89,7 +89,7 @@ class CachedEnocoo(Enocoo):
         maxsize=5000,
     )
 
-    get_area_ids = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_area_ids)
+    get_areas = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_areas)
     get_quarter_photovoltaic_data = __meter_cache(Enocoo.get_quarter_photovoltaic_data)
     _get_individual_consumption_uncompensated = __meter_cache(
         Enocoo._get_individual_consumption_uncompensated  # noqa: SLF001
