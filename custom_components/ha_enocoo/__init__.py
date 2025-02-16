@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from async_lru import alru_cache
 from homeassistant.const import CONF_PASSWORD, CONF_URL, CONF_USERNAME, Platform
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.loader import async_get_loaded_integration
 from homeassistant.util import dt as dt_util
 from oocone import Auth, Enocoo
@@ -41,7 +41,7 @@ async def async_setup_entry(
             base_url=entry.data[CONF_URL],
             username=entry.data[CONF_USERNAME],
             password=entry.data[CONF_PASSWORD],
-            websession=async_get_clientsession(hass),
+            websession=async_create_clientsession(hass),
         ),
         timezone=dt_util.get_default_time_zone(),
     )
