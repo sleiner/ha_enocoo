@@ -81,7 +81,16 @@ async def async_reload_entry(
 class CachedEnocoo(Enocoo):
     """Subclass of oocone.Enocoo with appropriate caching for our use case."""
 
+    __meter_cache = alru_cache(
+        # TTL should be close to but less then the 15 min polling interval:
+        ttl=dt.timedelta(minutes=14).seconds,
+        # we have a fairly short TTL, but possibly much data to query (think 5 years of
+        # daily data), so let's store a large number of items in the cache here.
+        maxsize=5000,
+    )
+
     get_area_ids = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_area_ids)
-    _get_individual_consumption_uncompensated = alru_cache(
-        ttl=dt.timedelta(minutes=14).seconds
-    )(Enocoo._get_individual_consumption_uncompensated)  # noqa: SLF001
+    get_quarter_photovoltaic_data = __meter_cache(Enocoo.get_quarter_photovoltaic_data)
+    _get_individual_consumption_uncompensated = __meter_cache(
+        Enocoo._get_individual_consumption_uncompensated  # noqa: SLF001
+    )

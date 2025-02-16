@@ -19,6 +19,9 @@
     "device": {
         "meter_with_id": {
             "name": "Zähler #{meter_id}"
+        },
+        "quarter_energy": {
+            "name": "Siedlungsenergie"
         }
     },
     "entity": {
@@ -43,6 +46,38 @@
                     "yellow": "gelb",
                     "green": "grün",
                     "unavailable": "unbekannt"
+                }
+            },
+            "quarter_energy_consumption": {
+                "name": "Siedlungsverbrauch",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "Auslesezeitpunkt"
+                    }
+                }
+            },
+            "quarter_energy_production": {
+                "name": "Siedlungsproduktion",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "Auslesezeitpunkt"
+                    }
+                }
+            },
+            "self_sufficiency": {
+                "name": "Autarkiegrad",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "Auslesezeitpunkt"
+                    }
+                }
+            },
+            "own_consumption": {
+                "name": "Eigenverbrauch",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "Auslesezeitpunkt"
+                    }
                 }
             }
         }
