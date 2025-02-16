@@ -14,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import PERCENTAGE, UnitOfPower
 from homeassistant.helpers.device_registry import DeviceInfo
-from oocone.model import Quantity
+from oocone.model import Quantity, UnknownT
 
 from custom_components.ha_enocoo.const import ATTR_ENOCOO_AREA, ATTR_READOUT_TIME
 
@@ -113,10 +113,10 @@ class EnergyTrafficLightColorEntity(EnergyTrafficLightEntity):
 class EnergyTrafficLightPriceEntity(EnergyTrafficLightEntity):
     """Energy price indicated by the traffic light."""
 
-    def _normalized_price(self) -> Quantity:
+    def _normalized_price(self) -> Quantity | UnknownT:
         price = self.dashboard_data.traffic_light_status.current_energy_price
 
-        if price.unit == "ct/kWh":
+        if price != "UNKNOWN" and price.unit == "ct/kWh":
             price = Quantity(value=price.value / 100.0, unit="€/kWh")
 
         return price
@@ -124,17 +124,18 @@ class EnergyTrafficLightPriceEntity(EnergyTrafficLightEntity):
     @override
     @property
     def native_value(self) -> float | None:
-        try:
-            result = float(self._normalized_price().value)
-        except ValueError:
-            result = None
-
-        return result
+        price = self._normalized_price()
+        if price == "UNKNOWN":
+            return None
+        return price.value
 
     @override
     @property
-    def native_unit_of_measurement(self) -> str:
-        return self._normalized_price().unit
+    def native_unit_of_measurement(self) -> str | None:
+        price = self._normalized_price()
+        if price == "UNKNOWN":
+            return None
+        return price.unit
 
 
 class MeterEntity(EnocooEntity, SensorEntity):
