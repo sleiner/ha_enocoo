@@ -18,13 +18,14 @@ from homeassistant.components.recorder.statistics import (
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
-from oocone.types import ConsumptionType
+from oocone.model import Consumption, ConsumptionType, PhotovoltaicSummary, Quantity
 
 from .const import DOMAIN, LOGGER
 from .data import EnocooConfigEntry, EnocooDashboardData
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
+    from typing import Any, Literal
 
     from homeassistant.core import HomeAssistant
 
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class EnocooUpdateCoordinator(DataUpdateCoordinator):
+class EnocooUpdateCoordinator(DataUpdateCoordinator[EnocooDashboardData]):
     """Class to manage fetching data from the API."""
 
     config_entry: EnocooConfigEntry
@@ -41,7 +42,7 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
         self,
         hass: HomeAssistant,
         config_entry: EnocooConfigEntry,
-        enocoo: oocone.enocoo,
+        enocoo: oocone.enocoo.Enocoo,
     ) -> None:
         """Initialize."""
         super().__init__(
@@ -65,6 +66,7 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
                 meter_table=await self.enocoo.get_meter_table(
                     allow_previous_day_until=dt.time(23, 45)
                 ),
+                current_photovoltaic_data=await self._get_latest_photovoltaic_data(),
             )
         except oocone.errors.AuthenticationFailed as exception:
             raise ConfigEntryAuthFailed(exception) from exception
@@ -73,6 +75,18 @@ class EnocooUpdateCoordinator(DataUpdateCoordinator):
 
         await self.statistics_inserter.trigger_insertion()
         return dashboard_data
+
+    async def _get_latest_photovoltaic_data(self) -> PhotovoltaicSummary | None:
+        today = dt.datetime.now(self.enocoo.timezone).date()
+        for num_days_back in range(3):
+            date = today - dt.timedelta(days=num_days_back)
+
+            if pv_data := await self.enocoo.get_quarter_photovoltaic_data(
+                during=date, interval="day"
+            ):
+                return pv_data[-1]
+
+        return None
 
 
 class StatisticsInserter:
@@ -103,10 +117,19 @@ class StatisticsInserter:
                         area_id=area_id, consumption_type=consumption_type
                     )
 
-    async def _insert_individual_consumption_statistics(
-        self, area_id: str, consumption_type: ConsumptionType
-    ) -> None:
-        statistic_id = self._statistic_id(area_id, consumption_type)
+            for name, id_suffix, pv_attribute in (
+                ("Siedlung Stromverbrauch",  "quarter_consumption",      "consumption"),
+                ("Siedlung Stromproduktion", "quarter_generation",       "generation"),
+                ("Siedlung Netzbezug",       "quarter_supply_from_grid", "calculated_supply_from_grid"),  # noqa: E501
+                ("Siedlung Netzeinspeisung", "quarter_feed_into_grid",   "calculated_feed_into_grid"),  # noqa: E501
+            ):  # fmt:skip
+                await self._insert_quarter_photovoltaic_statistics(
+                    name, id_suffix, pv_attribute
+                )
+
+    async def _find_last_stats(
+        self, statistic_id: str, now: dt.datetime
+    ) -> tuple[dt.datetime | None, dt.datetime | None, float, bool]:
         old_stats = await get_instance(self.hass).async_add_executor_job(
             get_last_statistics,
             self.hass,
@@ -138,10 +161,48 @@ class StatisticsInserter:
             last_stats_end_time = None
             consumption_sum = 0.0
 
+        not_expecting_newer_data = last_stats_end_time and (
+            now - last_stats_end_time
+        ) <= dt.timedelta(minutes=75)
+        expecting_newer_data = not not_expecting_newer_data
+
+        return (
+            last_stats_time,
+            last_stats_end_time,
+            consumption_sum,
+            expecting_newer_data,
+        )
+
+    @staticmethod
+    def _reading_is_usable(
+        hourly_reads: Sequence[Consumption | PhotovoltaicSummary],
+        last_stats_time: dt.datetime | None,
+    ) -> bool:
+        start = hourly_reads[0].start
+        if last_stats_time is not None and start <= last_stats_time:
+            return False  # reading is too old
+
+        period = sum((r.period for r in hourly_reads), start=dt.timedelta(0))
+        if period != dt.timedelta(hours=1):  # noqa: SIM103
+            return False  # hour is not complete
+
+        return True
+
+    async def _insert_individual_consumption_statistics(
+        self, area_id: str, consumption_type: ConsumptionType
+    ) -> None:
+        statistic_id = self._statistic_id_individual_consumption(
+            area_id, consumption_type
+        )
         now = dt.datetime.now(tz=dt_util.get_default_time_zone())
-        if last_stats_end_time and (now - last_stats_end_time) <= dt.timedelta(
-            minutes=75
-        ):
+        (
+            last_stats_time,
+            last_stats_end_time,
+            consumption_sum,
+            expecting_newer_data,
+        ) = await self._find_last_stats(statistic_id, now)
+
+        if not expecting_newer_data:
             # Statistics for a full hour are available about 15 minutes after the hour
             # has concluded.
             LOGGER.debug(
@@ -151,7 +212,7 @@ class StatisticsInserter:
             )
             return
 
-        async def get_dates_to_query() -> Generator[dt.date]:
+        async def get_dates_to_query() -> AsyncGenerator[dt.date]:
             if last_stats_time is None:
                 date = await self._find_earliest_consumption_statistics(
                     consumption_type=consumption_type, area_id=area_id
@@ -190,24 +251,14 @@ class StatisticsInserter:
                 new_stats = []
                 for _, hourly_reads_it in groupby(reads, lambda read: read.start.hour):
                     hourly_reads = list(hourly_reads_it)
-
-                    start = hourly_reads[0].start
-                    if last_stats_time is not None and start <= last_stats_time:
-                        # reading is too old
-                        continue
-
-                    period = sum(
-                        (r.period for r in hourly_reads), start=dt.timedelta(0)
-                    )
-                    if period != dt.timedelta(hours=1):
-                        # hour is not complete
+                    if not self._reading_is_usable(hourly_reads, last_stats_time):
                         continue
 
                     consumption = sum(r.value for r in hourly_reads)
                     consumption_sum += consumption
                     new_stats.append(
                         StatisticData(
-                            start=start,
+                            start=hourly_reads[0].start,
                             state=consumption,
                             sum=consumption_sum,
                         )
@@ -216,20 +267,105 @@ class StatisticsInserter:
                 stat_metadata = StatisticMetaData(
                     has_mean=False,
                     has_sum=True,
-                    name=self._statistic_name(area_id, consumption_type),
+                    name=self._statistic_name_individual_consumption(
+                        area_id, consumption_type
+                    ),
                     source=DOMAIN,
                     statistic_id=statistic_id,
                     unit_of_measurement=unit,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
 
-    def _statistic_id(self, area_id: str, consumption_type: ConsumptionType) -> str:
-        statistic_id = (
-            f"{self.config_entry.domain}:"
-            f"{self.config_entry.entry_id}_"
-            f"{area_id}_"
-            f"{consumption_type}"
-        ).lower()
+    async def _insert_quarter_photovoltaic_statistics(
+        self,
+        name: str,
+        id_suffix: str,
+        pv_summary_attribute_name: str,
+    ) -> None:
+        statistic_id = self._statistic_id(id_suffix)
+
+        now = dt.datetime.now(tz=dt_util.get_default_time_zone())
+        (
+            last_stats_time,
+            last_stats_end_time,
+            consumption_sum,
+            expecting_newer_data,
+        ) = await self._find_last_stats(statistic_id, now)
+
+        if not expecting_newer_data:
+            # Statistics for a full hour are available about 15 minutes after the hour
+            # has concluded.
+            LOGGER.debug(
+                "Photovoltaic %s statistics for the next full hour are not yet "
+                "available. Skipping statistics collection...",
+                name,
+            )
+            return
+
+        async def get_dates_to_query() -> AsyncGenerator[dt.date]:
+            if last_stats_time is None:
+                date = await self._find_earliest_photovoltaic_data()
+                if date is None:
+                    msg = (
+                        "Could not find individual consumption statistics"
+                        " on enocoo Dashboard."
+                    )
+                    raise UpdateFailed(msg)
+
+                LOGGER.info(
+                    "No history for photovoltaic %s is recorded yet."
+                    " Querying all data from enocoo, since the first data point on %s."
+                    " This might take a while...",
+                    name,
+                    date.isoformat(),
+                )
+            else:
+                date = last_stats_time.date()
+
+            today = now.date()
+            while date <= today:
+                yield date
+                date += dt.timedelta(1)
+
+        def get_quantity(pv: PhotovoltaicSummary) -> Quantity:
+            return getattr(pv, pv_summary_attribute_name)
+
+        async for date in get_dates_to_query():
+            all_reads = await self.enocoo.get_quarter_photovoltaic_data(
+                during=date, interval="day"
+            )
+
+            for unit, reads in groupby(all_reads, lambda read: get_quantity(read).unit):
+                new_stats = []
+                for _, hourly_reads_it in groupby(reads, lambda read: read.start.hour):
+                    hourly_reads = list(hourly_reads_it)
+                    if not self._reading_is_usable(hourly_reads, last_stats_time):
+                        continue
+
+                    consumption = sum(get_quantity(r).value for r in hourly_reads)
+                    consumption_sum += consumption
+                    new_stats.append(
+                        StatisticData(
+                            start=hourly_reads[0].start,
+                            state=consumption,
+                            sum=consumption_sum,
+                        )
+                    )
+
+                stat_metadata = StatisticMetaData(
+                    has_mean=False,
+                    has_sum=True,
+                    name=f"{self.config_entry.title} {name}".strip(),
+                    source=DOMAIN,
+                    statistic_id=statistic_id,
+                    unit_of_measurement=unit,
+                )
+                async_add_external_statistics(self.hass, stat_metadata, new_stats)
+
+    def _statistic_id_individual_consumption(
+        self, area_id: str, consumption_type: ConsumptionType
+    ) -> str:
+        statistic_id = self._statistic_id(suffix=f"{area_id}_{consumption_type}")
         LOGGER.debug(
             "Statistics ID for %s in area %s: %s",
             consumption_type,
@@ -238,7 +374,14 @@ class StatisticsInserter:
         )
         return statistic_id
 
-    def _statistic_name(self, area_id: str, consumption_type: ConsumptionType) -> str:
+    def _statistic_id(self, suffix: str) -> str:
+        return (
+            f"{self.config_entry.domain}:{self.config_entry.entry_id}_{suffix}".lower()
+        )
+
+    def _statistic_name_individual_consumption(
+        self, area_id: str, consumption_type: ConsumptionType
+    ) -> str:
         # Unfortunately, statistics names cannot be internationalized :/
         # Since this integration is mostly used in Germany, we use german names.
 
@@ -253,45 +396,103 @@ class StatisticsInserter:
         else:
             consumption_name = str(consumption_type)
 
-        return f"{self.config_entry.title} {area_id} {consumption_name}"
+        return self._statistic_name(f"{area_id} {consumption_name}")
+
+    async def _find_earliest_photovoltaic_data(self) -> dt.date | None:
+        async def get_timestamps(
+            interval: Literal["day", "month"], during: dt.date
+        ) -> list[dt.datetime]:
+            datapoints = await self.enocoo.get_quarter_photovoltaic_data(
+                interval=interval, during=during
+            )
+            return [datapoint.start for datapoint in datapoints]
+
+        return await self._find_earliest_datapoint(get_timestamps)
 
     async def _find_earliest_consumption_statistics(
         self,
         consumption_type: ConsumptionType,
         area_id: str,
     ) -> dt.date | None:
-        earliest_year = None
-        for year in range(
-            dt.datetime.now(tz=dt_util.get_default_time_zone()).year,
-            2000,
-            -1,
-        ):
-            yearly_readings = await self.enocoo.get_individual_consumption(
+        async def get_timestamps(
+            interval: Literal["day", "month", "year"], during: dt.date
+        ) -> list[dt.datetime]:
+            readings = await self.enocoo.get_individual_consumption(
                 consumption_type,
-                during=dt.date(year, 1, 1),
-                interval="year",
+                during=during,
+                interval=interval,
                 area_id=area_id,
                 compensate_off_by_one=False,
             )
-            if len(yearly_readings) > 0:
-                earliest_year_readings = yearly_readings
-                earliest_year = year
-            else:
-                break
+            return [reading.start for reading in readings]
 
-        if earliest_year is None:
+        return await self._find_earliest_datapoint(get_timestamps)
+
+    async def _find_earliest_datapoint(
+        self,
+        get_timestamps: Callable[
+            [Literal["month"], dt.date], Coroutine[Any, Any, list[dt.datetime]]
+        ],
+    ) -> dt.date | None:
+        return dt.date(2025, 1, 30)
+        today = dt.datetime.now(tz=dt_util.get_default_time_zone()).date()
+        months = self.__months_between(dt.date(2000, 1, 1), today)
+
+        async def has_timestamps(month: dt.date) -> bool:
+            timestamps = await get_timestamps("month", month)
+            return len(timestamps) > 0
+
+        try:
+            earliest_month_idx = await _bisect(months, has_timestamps)
+        except Exception:  # noqa: BLE001
             return None
+        else:
+            earliest_month = months[earliest_month_idx]
+            timestamps = await get_timestamps("month", earliest_month)
+            return sorted(timestamps)[0].date()
 
-        earliest_month = min(c.start.month for c in earliest_year_readings)
-        date = dt.date(earliest_year, earliest_month, 1)
-        while date.month == earliest_month:
-            daily_readings = await self.enocoo.get_individual_consumption(
-                consumption_type, during=date, interval="day", area_id=area_id
-            )
+    @staticmethod
+    def __months_between(from_date: dt.date, to_date: dt.date) -> list[dt.date]:
+        num_months_per_year = 12
+        firsts_of_months = []
+        date = from_date
 
-            if len(daily_readings) == 0:
-                date = date + dt.timedelta(days=1)
-            else:
-                break
+        while date <= to_date:
+            firsts_of_months.append(date)
+            year_increment, month_zerobased = divmod(date.month, num_months_per_year)
+            date = dt.date(date.year + year_increment, month_zerobased + 1, 1)
 
-        return date
+        return firsts_of_months
+
+
+async def _bisect[T](
+    a: Sequence[T], key: Callable[[T], Coroutine[None, None, bool]]
+) -> int:
+    """
+    Find the first element in a, where key(a) = True (assuming key(a) is ordered).
+
+    Assuming that a is a sequence and key assigns a boolean to each element in such that
+    key(a) is a step function (i.e. for the first part of a, key(x) is False and for the
+    second part key(x) is True), this function returns the index of the first element x
+    where key(x) is True.
+
+    This code is adapted from the Python standard library's bisect module [1].
+    Copyright (c) 2001-2025 Python Software Foundation; All Rights Reserved
+
+    [1]: https://github.com/python/cpython/blob/3.13/Lib/bisect.py
+    """
+    lo = 0
+    hi = len(a)
+
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if await key(a[mid]):
+            hi = mid
+        else:
+            lo = mid + 1
+
+    if lo == len(a):
+        msg = "Did not find an element x where key(x) == True."
+        raise StopIteration(msg)
+
+    return lo

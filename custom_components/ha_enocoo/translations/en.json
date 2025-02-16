@@ -19,6 +19,9 @@
     "device": {
         "meter_with_id": {
             "name": "Meter #{meter_id}"
+        },
+        "quarter_energy": {
+            "name": "Quarter energy"
         }
     },
     "entity": {
@@ -43,6 +46,38 @@
                     "yellow": "yellow",
                     "green": "green",
                     "unavailable": "unavailable"
+                }
+            },
+            "quarter_energy_consumption": {
+                "name": "Quarter consumption",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "readout time"
+                    }
+                }
+            },
+            "quarter_energy_production": {
+                "name": "Quarter production",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "readout time"
+                    }
+                }
+            },
+            "self_sufficiency": {
+                "name": "Self-sufficiency",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "readout time"
+                    }
+                }
+            },
+            "own_consumption": {
+                "name": "Own consumption",
+                "state_attributes": {
+                    "readout_time": {
+                        "name": "readout time"
+                    }
                 }
             }
         }
