@@ -1,8 +1,8 @@
-"""Tests for the coordinator part of the integration."""
+"""Tests for the _util module."""
 
 import pytest
 
-from custom_components.ha_enocoo import coordinator
+from custom_components.ha_enocoo._util import bisect
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,7 @@ async def test_bisect_begin() -> None:
     for array_length in range(1, 4):
         a = [True] * array_length
 
-        actual_result = await coordinator._bisect(a, identity)  # noqa: SLF001
+        actual_result = await bisect(a, identity)
         assert actual_result == 0
 
 
@@ -29,7 +29,7 @@ async def test_bisect_middle() -> None:
     for num_false in range(1, 3):
         a = ([False] * num_false) + ([True] * 3)
 
-        actual_result = await coordinator._bisect(a, identity)  # noqa: SLF001
+        actual_result = await bisect(a, identity)
         assert actual_result == num_false
 
 
@@ -43,7 +43,7 @@ async def test_bisect_end() -> None:
     for num_false in range(1, 3):
         a = ([False] * num_false) + [True]
 
-        actual_result = await coordinator._bisect(a, identity)  # noqa: SLF001
+        actual_result = await bisect(a, identity)
         assert actual_result == len(a) - 1
 
 
@@ -58,4 +58,4 @@ async def test_bisect_notfound() -> None:
         a = [False] * num_false
 
         with pytest.raises(RuntimeError, match="StopIteration"):
-            await coordinator._bisect(a, identity)  # noqa: SLF001
+            await bisect(a, identity)
