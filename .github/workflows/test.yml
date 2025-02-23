@@ -9,11 +9,10 @@ on:
             - main
 
 jobs:
-    pytest:
+    nox:
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                python-version: ["3.12"]
                 os: [ubuntu-latest, macOS-latest, windows-latest]
 
         steps:
@@ -25,11 +24,11 @@ jobs:
               with:
                   enable-cache: true
 
-            - name: Install Python
-              run: uv python install ${{ matrix.python-version }}
+            - name: Set up nox
+              uses: wntrblm/nox@2025.02.09
 
             - name: Install dependencies
-              run: uv sync --all-extras --dev
+              run: nox --install-only --verbose
 
-            - name: Run Tests
-              run: uv run pytest --verbose
+            - name: Run nox
+              run: nox

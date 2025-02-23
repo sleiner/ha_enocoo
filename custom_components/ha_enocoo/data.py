@@ -29,5 +29,6 @@ class EnocooRuntimeData:
 class EnocooDashboardData:
     """Data read from the enocoo dashboard."""
 
-    traffic_light_status: oocone.types.TrafficLightStatus
-    meter_table: list[oocone.types.MeterStatus]
+    traffic_light_status: oocone.model.TrafficLightStatus
+    meter_table: list[oocone.model.MeterStatus]
+    current_photovoltaic_data: oocone.model.PhotovoltaicSummary | None
