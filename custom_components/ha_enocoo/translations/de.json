@@ -73,7 +73,7 @@
                 }
             },
             "own_consumption": {
-                "name": "Eigenverbrauch",
+                "name": "Eigenverbrauchsanteil",
                 "state_attributes": {
                     "readout_time": {
                         "name": "Auslesezeitpunkt"
