@@ -17,6 +17,7 @@ from homeassistant.loader import async_get_loaded_integration
 from homeassistant.util import dt as dt_util
 from oocone import Auth, Enocoo
 
+from ._util import chain_decorators, copy_result
 from .coordinator import EnocooUpdateCoordinator
 from .data import EnocooRuntimeData
 
@@ -81,12 +82,18 @@ async def async_reload_entry(
 class CachedEnocoo(Enocoo):
     """Subclass of oocone.Enocoo with appropriate caching for our use case."""
 
-    __meter_cache = alru_cache(
-        # TTL should be close to but less then the 15 min polling interval:
-        ttl=dt.timedelta(minutes=14).seconds,
-        # we have a fairly short TTL, but possibly much data to query (think 5 years of
-        # daily data), so let's store a large number of items in the cache here.
-        maxsize=5000,
+    __meter_cache = chain_decorators(
+        alru_cache(
+            # TTL should be close to but less then the 15 min polling interval:
+            ttl=dt.timedelta(minutes=14).seconds,
+            # we have a fairly short TTL, but possibly much data to query (think 5 years
+            # of daily data), so let's store a large number of items in the cache here.
+            maxsize=5000,
+        ),
+        # Always copy the result after it comes from the cache - to prevent
+        # modifications of the cached object by function users. In this case, a deep
+        # copy is not necessary, since the return value is a list of frozen dataclasses.
+        copy_result(deep=False),
     )
 
     get_areas = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_areas)

@@ -2,6 +2,8 @@
 
 import datetime as dt
 from collections.abc import Callable, Coroutine, Generator, Sequence
+from copy import copy, deepcopy
+from typing import Any
 
 from oocone.model import Consumption, PhotovoltaicSummary
 
@@ -59,3 +61,46 @@ def zip_measurements[T: MeasurementWithinPeriod, U: MeasurementWithinPeriod](
             )
             raise ValueError(msg)
         yield (m1.start, m1.period, m1, m2)
+
+
+def chain_decorators(
+    *decorators: Callable[[Callable[..., Any]], Callable[..., Any]],
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Chains the given decorators, first to last."""
+
+    def make_wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+        for decorator in decorators:
+            func = decorator(func)
+        return func
+
+    return make_wrapper
+
+
+def copy_result[**P, T](
+    *, deep: bool
+) -> Callable[
+    [Callable[P, Coroutine[Any, Any, T]]], Callable[P, Coroutine[Any, Any, T]]
+]:
+    """
+    Lets a function return a copy of what the wrapped function returns.
+
+    Args:
+        deep: If true, the return value will be copied recursively.
+              Else, a shallow copy will take place
+
+    Returns: A decorator.
+
+    """
+
+    def make_wrapper(
+        func: Callable[P, Coroutine[Any, Any, T]],
+    ) -> Callable[P, Coroutine[Any, Any, T]]:
+        async def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
+            r = await func(*args, **kwargs)
+            if deep:
+                return deepcopy(r)
+            return copy(r)
+
+        return wrapped
+
+    return make_wrapper
