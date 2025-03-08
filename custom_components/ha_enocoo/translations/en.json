@@ -1,6 +1,15 @@
 {
     "config": {
+        "abort": {
+            "reauth_successful": "Re-authentication was successful"
+        },
         "step": {
+            "reauth_confirm": {
+                "description": "Please re-enter the password for the enocoo dashboard. URL and username will remain as initially configured:\n  - URL: {url}\n  - username: `{username}`",
+                "data": {
+                    "password": "Password"
+                }
+            },
             "user": {
                 "description": "If you need help with the configuration have a look here: https://github.com/sleiner/ha_enocoo",
                 "data": {
