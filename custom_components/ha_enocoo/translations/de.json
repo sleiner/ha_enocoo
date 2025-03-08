@@ -1,6 +1,15 @@
 {
     "config": {
+        "abort": {
+            "reauth_successful": "Die erneute Authentifizierung war erfolgreich"
+        },
         "step": {
+            "reauth_confirm": {
+                "description": "Bitte gib das aktuelle Passwort zum enocoo-Dashboard ein. URL und Benutzername bleiben gesetzt:\n  - URL: {url}\n  - Benutzername: `{username}`",
+                "data": {
+                    "password": "Passwort"
+                }
+            },
             "user": {
                 "description": "Für Hilfe bei der Konfiguration, siehe: https://github.com/sleiner/ha_enocoo",
                 "data": {
