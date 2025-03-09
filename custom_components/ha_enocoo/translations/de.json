@@ -25,6 +25,25 @@
             "unknown": "Unbekannter Fehler."
         }
     },
+    "config_subentries": {
+        "ownership_shares": {
+            "entry_type": "Miteigentumsanteile",
+            "initiate_flow": {
+                "user": "Miteigentumsanteile hinzuf\u00fcgen"
+            },
+            "step": {
+                "user": {
+                    "title": "Füge Miteigentumsanteile hinzu",
+                    "description": "Um Daten mit Bezug auf Miteigentumsanteile zu bekommen, kannst du hier mehrere Miteigentumsanteile angeben, die dich interessieren. Dadurch bekommst du einige Sensoren und Statistiken im Bezug auf diese Anteilsmenge. Den Namen kannst Du frei wählen.",
+                    "data": {
+                        "name": "Name",
+                        "num_shares": "Miteigentumsanteile",
+                        "num_shares_total": "Miteigentumsanteile insgesamt"
+                    }
+                }
+            }
+        }
+    },
     "device": {
         "meter_with_id": {
             "name": "Zähler #{meter_id}"
@@ -71,6 +90,20 @@
                     "readout_time": {
                         "name": "Auslesezeitpunkt"
                     }
+                }
+            },
+            "quarter_power_surplus": {
+                "name": "Leistungsüberschuss Siedlung",
+                "state_attributes": {
+                    "readout_time": { "name": "Auslesezeitpunkt" }
+                }
+            },
+            "per_share_power_surplus": {
+                "name": "Leistungsüberschuss {share_name}",
+                "state_attributes": {
+                    "readout_time": { "name": "Auslesezeitpunkt" },
+                    "shares": { "name": "Miteigentumsanteile" },
+                    "shares_total": { "name": "Miteigentumsanteile insgesamt" }
                 }
             },
             "self_sufficiency": {

@@ -12,12 +12,14 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfPower
+from homeassistant.const import CONF_NAME, PERCENTAGE, UnitOfPower
 from homeassistant.helpers.device_registry import DeviceInfo
 from oocone.model import Quantity, UnknownT
 
 from custom_components.ha_enocoo.const import ATTR_ENOCOO_AREA, ATTR_READOUT_TIME
 
+from ._util import all_the_same
+from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL
 from .entity import EnocooEntity
 
 if TYPE_CHECKING:
@@ -25,7 +27,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from oocone.model import MeterStatus, PhotovoltaicSummary
 
     from custom_components.ha_enocoo.data import EnocooDashboardData
@@ -37,7 +39,7 @@ if TYPE_CHECKING:
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001 Unused function argument: `hass`
     entry: EnocooConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
     dashboard_data: EnocooDashboardData = entry.runtime_data.coordinator.data
@@ -64,6 +66,7 @@ async def async_setup_entry(
             ),
             QuarterEnergyProductionEntity(entry.runtime_data.coordinator),
             QuarterEnergyConsumptionEntity(entry.runtime_data.coordinator),
+            QuarterPowerSurplusEntity(entry.runtime_data.coordinator),
             QuarterEnergySelfSufficiencyEntity(entry.runtime_data.coordinator),
             QuarterEnergyOwnConsumptionEntity(entry.runtime_data.coordinator),
         ]
@@ -75,6 +78,20 @@ async def async_setup_entry(
             for status in dashboard_data.meter_table
         ]
     )
+    for subentry_id, subentry in entry.subentries.items():
+        match subentry.subentry_type:
+            case "ownership_shares":
+                async_add_entities(
+                    [
+                        PerSharePowerSurplusEntity(
+                            entry.runtime_data.coordinator,
+                            share_name=subentry.data[CONF_NAME],
+                            num_shares=subentry.data[CONF_NUM_SHARES],
+                            num_shares_total=subentry.data[CONF_NUM_SHARES_TOTAL],
+                        )
+                    ],
+                    config_subentry_id=subentry_id,
+                )
 
 
 class EnergyTrafficLightEntity(EnocooEntity, SensorEntity):
@@ -249,8 +266,7 @@ class _QuarterEnergyEntity(EnocooEntity, SensorEntity):
     def _pv_data(self) -> PhotovoltaicSummary | None:
         return self.dashboard_data.current_photovoltaic_data
 
-    @staticmethod
-    def _get_reading(summary: PhotovoltaicSummary) -> Quantity | None:
+    def _get_reading(self, summary: PhotovoltaicSummary) -> Quantity | None:
         """Return the specific reading relevant for the current sensor."""
         raise NotImplementedError
 
@@ -353,6 +369,73 @@ class QuarterEnergyConsumptionEntity(_QuarterEnergyPowerEntity):
     @override
     def _get_reading(summary: PhotovoltaicSummary) -> Quantity:
         return summary.consumption
+
+
+class QuarterPowerSurplusEntity(_QuarterEnergyPowerEntity):
+    """
+    Power being fed into the grid.
+
+    If the quarter receives energy from the grid, this value will not be negative but
+    remain zero.
+    """
+
+    def __init__(self, coordinator: EnocooUpdateCoordinator) -> None:
+        """Initialize."""
+        super().__init__(
+            name_in_dashboard="Quarter power surplus",
+            key="quarter_power_surplus",
+            coordinator=coordinator,
+            icon="mdi:transmission-tower-export",
+        )
+
+    @staticmethod
+    @override
+    def _get_reading(summary: PhotovoltaicSummary) -> Quantity | None:
+        return Quantity(
+            value=max(summary.generation.value - summary.consumption.value, 0),
+            unit=all_the_same([summary.generation.unit, summary.consumption.unit]),
+        )
+
+
+class PerSharePowerSurplusEntity(_QuarterEnergyPowerEntity):
+    """Like quarter supply from grid, but scaled for a specific share."""
+
+    def __init__(
+        self,
+        coordinator: EnocooUpdateCoordinator,
+        *,
+        share_name: str,
+        num_shares: int,
+        num_shares_total: int,
+    ) -> None:
+        """Initialize."""
+        super().__init__(
+            name_in_dashboard=f"{share_name} power surplus",
+            key="per_share_power_surplus",
+            coordinator=coordinator,
+            icon="mdi:transmission-tower-export",
+        )
+        self._attr_translation_placeholders = {"share_name": share_name}
+        self._num_shares = num_shares
+        self._num_shares_total = num_shares_total
+
+    @override
+    def _get_reading(self, summary: PhotovoltaicSummary) -> Quantity | None:
+        if quarter_surplus := QuarterPowerSurplusEntity._get_reading(summary):  # noqa: SLF001
+            return Quantity(
+                value=quarter_surplus.value * self._num_shares / self._num_shares_total,
+                unit=quarter_surplus.unit,
+            )
+        return None
+
+    @property
+    @override
+    def extra_state_attributes(self) -> Mapping[str, Any]:
+        return {
+            **super().extra_state_attributes,
+            "shares": self._num_shares,
+            "shares_total": self._num_shares_total,
+        }
 
 
 class _QuarterEnergyPercentageEntity(_QuarterEnergyEntity):
