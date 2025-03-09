@@ -18,6 +18,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.util import dt as dt_util
+from homeassistant.util import slugify
 from oocone import Auth, Enocoo, errors
 
 from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL, DOMAIN, LOGGER
@@ -174,8 +175,15 @@ class OwnershipShareSubentryFlowHandler(ConfigSubentryFlow):
             return self.async_create_entry(
                 title=user_input[CONF_NAME],
                 data=user_input,
+                # Setting the slugified name as unique ID prevents us from having two
+                # subentries write to the same statistic ID. Unfortunately, if a user
+                # does actually add a subentry with the same slug as an existing one,
+                # we cannot even show an error message, as the error will be handled
+                # elsewhere. We can neither catch an exception here nor (comfortably)
+                # check for this error condition beforehand. This means that the user
+                # will get an "unknown error" message, which is not super helpful :/
+                unique_id=slugify(user_input[CONF_NAME]),
             )
-
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(

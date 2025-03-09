@@ -14,10 +14,13 @@ from homeassistant.components.recorder.models import StatisticData, StatisticMet
 from homeassistant.components.recorder.statistics import (
     async_add_external_statistics,
     get_last_statistics,
+    get_metadata,
     statistics_during_period,
 )
+from homeassistant.const import CONF_NAME
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util import dt as dt_util
+from homeassistant.util import slugify
 from oocone.model import (
     Area,
     Consumption,
@@ -27,11 +30,11 @@ from oocone.model import (
 )
 
 from ._util import all_the_same, bisect, zip_measurements
-from .const import DOMAIN, LOGGER
+from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL, DOMAIN, LOGGER
 from .data import EnocooConfigEntry
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
+    from collections.abc import AsyncGenerator, Callable, Coroutine, Mapping, Sequence
     from typing import Any, Literal
 
     import oocone
@@ -82,6 +85,11 @@ class StatisticsInserter:
                 await self._insert_quarter_photovoltaic_statistics(
                     name, id_suffix, pv_attribute
                 )
+
+            for subentry in self.config_entry.subentries.values():
+                match subentry.subentry_type:
+                    case "ownership_shares":
+                        await self._insert_surplus_per_share_statistics(subentry.data)
 
     @staticmethod
     def __relevant_consumption_types(area: Area) -> list[ConsumptionType]:
@@ -203,6 +211,56 @@ class StatisticsInserter:
             consumption_sum,
         )
 
+    async def _dates_to_insert_quarter_pv_statistics(
+        self, statistic_id: str
+    ) -> tuple[bool, AsyncGenerator[dt.date], dt.datetime | None, float]:
+        now = dt.datetime.now(tz=dt_util.get_default_time_zone())
+        (
+            last_stats_time,
+            last_stats_end_time,
+            statistic_sum,
+            expecting_newer_data,
+        ) = await self._find_last_stats(statistic_id, now)
+
+        if expecting_newer_data:
+
+            async def get_dates_to_query() -> AsyncGenerator[dt.date]:
+                if last_stats_time is None:
+                    date = await self._find_earliest_photovoltaic_data()
+                    if date is None:
+                        msg = (
+                            "Could not find photovoltaic statistics"
+                            " on enocoo dashboard."
+                        )
+                        raise UpdateFailed(msg)
+
+                    LOGGER.info(
+                        "No history for %s is recorded yet."
+                        " Filling in all data since the first data point on %s."
+                        " This might take a while...",
+                        statistic_id,
+                        date.isoformat(),
+                    )
+                else:
+                    date = last_stats_time.date()
+
+                today = now.date()
+                while date <= today:
+                    yield date
+                    date += dt.timedelta(1)
+        else:
+
+            async def get_dates_to_query() -> AsyncGenerator[dt.date]:
+                return
+                yield
+
+        return (
+            expecting_newer_data,
+            get_dates_to_query(),
+            last_stats_time,
+            statistic_sum,
+        )
+
     async def _insert_individual_consumption_statistics(
         self, area: Area, consumption_type: ConsumptionType
     ) -> None:
@@ -320,13 +378,12 @@ class StatisticsInserter:
     ) -> None:
         statistic_id = self._statistic_id(id_suffix)
 
-        now = dt.datetime.now(tz=dt_util.get_default_time_zone())
         (
-            last_stats_time,
-            last_stats_end_time,
-            consumption_sum,
             expecting_newer_data,
-        ) = await self._find_last_stats(statistic_id, now)
+            dates_to_query,
+            last_stats_time,
+            statistic_sum,
+        ) = await self._dates_to_insert_quarter_pv_statistics(statistic_id)
 
         if not expecting_newer_data:
             # Statistics for a full hour are available about 15 minutes after the hour
@@ -338,35 +395,10 @@ class StatisticsInserter:
             )
             return
 
-        async def get_dates_to_query() -> AsyncGenerator[dt.date]:
-            if last_stats_time is None:
-                date = await self._find_earliest_photovoltaic_data()
-                if date is None:
-                    msg = (
-                        "Could not find individual consumption statistics"
-                        " on enocoo Dashboard."
-                    )
-                    raise UpdateFailed(msg)
-
-                LOGGER.info(
-                    "No history for photovoltaic %s is recorded yet."
-                    " Querying all data from enocoo, since the first data point on %s."
-                    " This might take a while...",
-                    name,
-                    date.isoformat(),
-                )
-            else:
-                date = last_stats_time.date()
-
-            today = now.date()
-            while date <= today:
-                yield date
-                date += dt.timedelta(1)
-
         def get_quantity(pv: PhotovoltaicSummary) -> Quantity:
             return getattr(pv, pv_summary_attribute_name)
 
-        async for date in get_dates_to_query():
+        async for date in dates_to_query:
             all_reads = await self.enocoo.get_quarter_photovoltaic_data(
                 during=date, interval="day"
             )
@@ -379,12 +411,12 @@ class StatisticsInserter:
                         continue
 
                     consumption = sum(get_quantity(r).value for r in hourly_reads)
-                    consumption_sum += consumption
+                    statistic_sum += consumption
                     new_stats.append(
                         StatisticData(
                             start=hourly_reads[0].start,
                             state=consumption,
-                            sum=consumption_sum,
+                            sum=statistic_sum,
                         )
                     )
 
@@ -397,6 +429,88 @@ class StatisticsInserter:
                     unit_of_measurement=unit,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
+
+    async def _insert_surplus_per_share_statistics(
+        self, subentry_data: Mapping[str, Any]
+    ) -> None:
+        share_factor = (
+            subentry_data[CONF_NUM_SHARES] / subentry_data[CONF_NUM_SHARES_TOTAL]
+        )
+        await self._derive_statistic(
+            statistic_id=self._statistic_id(
+                f"per_share_{slugify(subentry_data[CONF_NAME])}_feed_into_grid"
+            ),
+            name=f"{subentry_data[CONF_NAME]} anteilige Netzeinspeisung",
+            base_statistic_id=self._statistic_id("quarter_feed_into_grid"),
+            transform_datapoint=lambda value: value * share_factor,
+        )
+
+    async def _derive_statistic(
+        self,
+        *,
+        statistic_id: str,
+        name: str,
+        base_statistic_id: str,
+        transform_datapoint: Callable[[float], float],
+    ) -> None:
+        (
+            expecting_newer_data,
+            dates_to_query,
+            last_stats_time,
+            statistic_sum,
+        ) = await self._dates_to_insert_quarter_pv_statistics(statistic_id)
+        first_date_to_query = await dates_to_query.__anext__()
+        query_start = last_stats_time or dt.datetime.combine(
+            first_date_to_query, dt.time(), self.enocoo.timezone
+        )
+
+        _, base_metadata = (
+            await get_instance(self.hass).async_add_executor_job(
+                lambda: get_metadata(self.hass, statistic_ids={base_statistic_id})
+            )
+        )[base_statistic_id]
+        base_stats = (
+            await get_instance(self.hass).async_add_executor_job(
+                statistics_during_period,
+                self.hass,
+                query_start,
+                None,
+                {base_statistic_id},
+                "hour",
+                None,
+                {"state", "sum"},
+            )
+        )[base_statistic_id]
+
+        new_stats = []
+        for base_stat in base_stats:
+            if base_stat["state"] is None:
+                new_state = None
+            else:
+                new_state = transform_datapoint(base_stat["state"])
+                statistic_sum += new_state
+            new_stat = {
+                **base_stat,
+                "start": dt.datetime.fromtimestamp(base_stat["start"], dt.UTC),
+                "state": new_state,
+                "sum": statistic_sum,
+            }
+            for field_name in ("min", "max", "mean"):
+                if (base_field := base_stat.get(field_name, None)) is not None:
+                    base_field = cast(float, base_field)
+                    new_stat[field_name] = transform_datapoint(base_field)
+            new_stats.append(StatisticData(**new_stat))  # type: ignore[typeddict-item]
+
+        new_metadata = StatisticMetaData(
+            **{
+                **base_metadata,
+                "name": name,
+                "statistic_id": statistic_id,
+                "source": DOMAIN,
+            }
+        )
+
+        async_add_external_statistics(self.hass, new_metadata, new_stats)
 
     def _statistic_id(self, suffix: str, *, area: Area | None = None) -> str:
         prefix = f"{self.config_entry.domain}:{self.config_entry.entry_id}"
