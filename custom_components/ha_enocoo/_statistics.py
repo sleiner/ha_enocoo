@@ -26,12 +26,12 @@ from oocone.model import (
     Quantity,
 )
 
-from ._util import bisect, zip_measurements
+from ._util import all_the_same, bisect, zip_measurements
 from .const import DOMAIN, LOGGER
 from .data import EnocooConfigEntry
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Callable, Coroutine, Iterable, Sequence
+    from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
     from typing import Any, Literal
 
     import oocone
@@ -583,16 +583,6 @@ class IndividualCalculatedMetric(ABC):
 
                 aggregate_start = consumption_by_hour[hour][0].start.replace(minute=0)
                 aggregate_period = dt.timedelta(hours=1)
-
-                def all_the_same[T](things: Iterable[T]) -> T:
-                    iterator = iter(things)
-                    first = next(iterator)
-
-                    if any(item != first for item in iterator):
-                        msg = "Expected identical values, but found different ones."
-                        raise ValueError(msg)
-
-                    return first
 
                 aggregate_consumption = Consumption(
                     start=aggregate_start,
