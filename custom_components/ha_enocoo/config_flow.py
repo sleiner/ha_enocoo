@@ -2,29 +2,37 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, override
 
 import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant.const import CONF_PASSWORD, CONF_URL, CONF_USERNAME
+from homeassistant.config_entries import (
+    SOURCE_REAUTH,
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    ConfigSubentryFlow,
+    SubentryFlowResult,
+)
+from homeassistant.const import CONF_NAME, CONF_PASSWORD, CONF_URL, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.util import dt as dt_util
 from oocone import Auth, Enocoo, errors
 
-from .const import DOMAIN, LOGGER
+from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL, DOMAIN, LOGGER
 
 
-class EnocooFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class EnocooFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Enocoo."""
 
     VERSION = 1
 
     async def async_step_user(
         self,
-        user_input: dict | None = None,
-    ) -> config_entries.ConfigFlowResult:
-        """Handle a flow initialized by the user."""
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle a flow initiated by the user."""
         _errors: dict[str, str] = {}
         if user_input is not None:
             self._entry_data = user_input
@@ -59,9 +67,7 @@ class EnocooFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
-    async def _async_finalize(
-        self, _errors: dict[str, str]
-    ) -> config_entries.ConfigFlowResult | None:
+    async def _async_finalize(self, _errors: dict[str, str]) -> ConfigFlowResult | None:
         try:
             await self._test_credentials(
                 base_url=self._entry_data[CONF_URL],
@@ -83,8 +89,8 @@ class EnocooFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             return self._async_create_entry()
 
-    def _async_create_entry(self) -> config_entries.ConfigFlowResult:
-        if self.source == config_entries.SOURCE_REAUTH:
+    def _async_create_entry(self) -> ConfigFlowResult:
+        if self.source == SOURCE_REAUTH:
             existing_entry = self._get_reauth_entry()
         else:
             existing_entry = None
@@ -114,16 +120,14 @@ class EnocooFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
         await client.get_meter_table()
 
-    async def async_step_reauth(
-        self, entry_data: dict[str, Any]
-    ) -> config_entries.ConfigFlowResult:
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Handle authentication failures from enocoo dashboard."""
         self._entry_data = entry_data
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
+    ) -> ConfigFlowResult:
         """Provide users the possibility of updating their password."""
         _errors: dict[str, str] = {}
         if user_input is not None:
@@ -141,6 +145,62 @@ class EnocooFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_PASSWORD): str,
                 }
+            ),
+            errors=_errors,
+        )
+
+    @classmethod
+    @callback
+    @override
+    def async_get_supported_subentry_types(
+        cls, config_entry: ConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        return {"ownership_shares": OwnershipShareSubentryFlowHandler}
+
+
+class OwnershipShareSubentryFlowHandler(ConfigSubentryFlow):
+    """Subentry flow for configuring ownership shares."""
+
+    VERSION = 1
+    MINOR_VERSION = 1
+
+    async def async_step_user(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> SubentryFlowResult:
+        """Handle a flow initiated by the user."""
+        _errors: dict[str, str] = {}
+        if user_input is not None:
+            return self.async_create_entry(
+                title=user_input[CONF_NAME],
+                data=user_input,
+            )
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_NAME,
+                        default=(user_input or {}).get(CONF_NAME, vol.UNDEFINED),  # type: ignore[call-overload]
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.TEXT,
+                        ),
+                    ),
+                    vol.Required(CONF_NUM_SHARES): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1, step=1, mode=selector.NumberSelectorMode.BOX
+                        )
+                    ),
+                    vol.Required(
+                        CONF_NUM_SHARES_TOTAL, default=10_000
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1, step=1, mode=selector.NumberSelectorMode.BOX
+                        )
+                    ),
+                },
             ),
             errors=_errors,
         )

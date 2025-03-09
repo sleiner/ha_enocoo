@@ -25,6 +25,25 @@
             "unknown": "Unknown error occurred."
         }
     },
+    "config_subentries": {
+        "ownership_shares": {
+            "entry_type": "Ownership shares",
+            "initiate_flow": {
+                "user": "Add ownership shares"
+            },
+            "step": {
+                "user": {
+                    "title": "Add ownership shares",
+                    "description": "For getting metrics related to ownership shares, you can register a number of ownership shares here. This will give you some related sensors and statistics. Choose whatever name works best for you.",
+                    "data": {
+                        "name": "Name",
+                        "num_shares": "Number of shares",
+                        "num_shares_total": "Total number of shares"
+                    }
+                }
+            }
+        }
+    },
     "device": {
         "meter_with_id": {
             "name": "Meter #{meter_id}"
@@ -71,6 +90,20 @@
                     "readout_time": {
                         "name": "readout time"
                     }
+                }
+            },
+            "quarter_power_surplus": {
+                "name": "Quarter power surplus",
+                "state_attributes": {
+                    "readout_time": { "name": "readout time" }
+                }
+            },
+            "per_share_power_surplus": {
+                "name": "{share_name} power surplus",
+                "state_attributes": {
+                    "readout_time": { "name": "readout time" },
+                    "shares": { "name": "shares" },
+                    "shares_total": { "name": "shares total" }
                 }
             },
             "self_sufficiency": {
