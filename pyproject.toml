@@ -33,3 +33,4 @@ explicit_package_bases = true
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
+addopts = "--ignore=.nox --ignore=.venv"
