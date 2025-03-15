@@ -15,14 +15,14 @@ dependencies = [
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-[tool.uv]
-dev-dependencies = [
-    "homeassistant==2025.2.1",
+[dependency-groups]
+dev = [
+    "homeassistant==2025.3.1",
     "mypy>=1.15.0",
     "nox>=2025.2.9",
-    "pytest>=8.3.3",
+    "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
-    "ruff>=0.7.1",
+    "ruff>=0.9.10",
 ]
 
 [tool.pdm.build]
@@ -33,3 +33,4 @@ explicit_package_bases = true
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
+addopts = "--ignore=.nox --ignore=.venv"

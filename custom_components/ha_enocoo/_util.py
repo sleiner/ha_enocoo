@@ -1,7 +1,7 @@
 """Various utilities for other modules."""
 
 import datetime as dt
-from collections.abc import Callable, Coroutine, Generator, Sequence
+from collections.abc import Callable, Coroutine, Generator, Iterable, Sequence
 from copy import copy, deepcopy
 from typing import Any
 
@@ -39,6 +39,17 @@ async def bisect[T](
         raise StopIteration(msg)
 
     return lo
+
+
+def all_the_same[T](things: Iterable[T]) -> T:
+    iterator = iter(things)
+    first = next(iterator)
+
+    if any(item != first for item in iterator):
+        msg = "Expected identical values, but found different ones."
+        raise ValueError(msg)
+
+    return first
 
 
 MeasurementWithinPeriod = Consumption | PhotovoltaicSummary
