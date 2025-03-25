@@ -459,6 +459,15 @@ class StatisticsInserter:
             last_stats_time,
             statistic_sum,
         ) = await self._dates_to_insert_quarter_pv_statistics(statistic_id)
+
+        if not expecting_newer_data:
+            LOGGER.debug(
+                "%s statistics for the next full hour are not yet available."
+                " Skipping statistics collection...",
+                name,
+            )
+            return
+
         first_date_to_query = await dates_to_query.__anext__()
         query_start = last_stats_time or dt.datetime.combine(
             first_date_to_query, dt.time(), self.enocoo.timezone
