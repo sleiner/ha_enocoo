@@ -172,7 +172,7 @@ class StatisticsInserter:
         now = dt.datetime.now(tz=dt_util.get_default_time_zone())
         (
             last_stats_time,
-            _,
+            last_stats_end_time,
             consumption_sum,
             expecting_newer_data,
         ) = await self._find_last_stats(statistic_id, now)
@@ -180,7 +180,7 @@ class StatisticsInserter:
         if expecting_newer_data:
 
             async def get_dates_to_query() -> AsyncGenerator[dt.date]:
-                if last_stats_time is None:
+                if last_stats_end_time is None:
                     date = area.data_available_since
 
                     LOGGER.info(
@@ -191,15 +191,9 @@ class StatisticsInserter:
                         date.isoformat(),
                     )
                 else:
-                    date = last_stats_time.date()
+                    date = last_stats_end_time.date()
 
-                newest_date_online = min(
-                    now.date(),
-                    # Areas are cached for about a day, so data_available_until might be
-                    # a day behind. To compensate, we add a day.
-                    area.data_available_until + dt.timedelta(days=1),
-                )
-                while date <= newest_date_online:
+                while date <= area.data_available_until:
                     yield date
                     date += dt.timedelta(1)
         else:
@@ -229,7 +223,7 @@ class StatisticsInserter:
         if expecting_newer_data:
 
             async def get_dates_to_query() -> AsyncGenerator[dt.date]:
-                if last_stats_time is None:
+                if last_stats_end_time is None:
                     date = await self._find_earliest_photovoltaic_data()
                     if date is None:
                         msg = (
@@ -246,7 +240,7 @@ class StatisticsInserter:
                         date.isoformat(),
                     )
                 else:
-                    date = last_stats_time.date()
+                    date = last_stats_end_time.date()
 
                 today = now.date()
                 while date <= today:
