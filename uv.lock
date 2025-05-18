@@ -798,10 +798,10 @@ requires-dist = [
 dev = [
     { name = "homeassistant", specifier = "==2025.5.2" },
     { name = "mypy", specifier = ">=1.15.0" },
-    { name = "nox", specifier = ">=2025.2.9" },
+    { name = "nox", specifier = ">=2025.5.1" },
     { name = "pytest", specifier = ">=8.3.5" },
-    { name = "pytest-asyncio", specifier = ">=0.25.3" },
-    { name = "ruff", specifier = ">=0.9.10" },
+    { name = "pytest-asyncio", specifier = ">=0.26.0" },
+    { name = "ruff", specifier = ">=0.11.10" },
 ]
 
 [[package]]
