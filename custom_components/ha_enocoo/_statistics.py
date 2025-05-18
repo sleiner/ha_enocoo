@@ -10,7 +10,11 @@ from statistics import mean
 from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
 from homeassistant.components.recorder import get_instance
-from homeassistant.components.recorder.models import StatisticData, StatisticMetaData
+from homeassistant.components.recorder.models import (
+    StatisticData,
+    StatisticMeanType,
+    StatisticMetaData,
+)
 from homeassistant.components.recorder.statistics import (
     async_add_external_statistics,
     get_last_statistics,
@@ -127,7 +131,7 @@ class StatisticsInserter:
                 None,
                 {"sum"},
             )
-            consumption_sum = cast(float, last_stat[statistic_id][0]["sum"])
+            consumption_sum = cast("float", last_stat[statistic_id][0]["sum"])
         else:
             last_stats_time = None
             last_stats_end_time = None
@@ -309,7 +313,7 @@ class StatisticsInserter:
                     )
 
                 stat_metadata = StatisticMetaData(
-                    has_mean=False,
+                    mean_type=StatisticMeanType.NONE,
                     has_sum=True,
                     name=self._statistic_name_individual(area, consumption_type),
                     source=DOMAIN,
@@ -361,7 +365,7 @@ class StatisticsInserter:
                     )
 
                 stat_metadata = StatisticMetaData(
-                    has_mean=False,
+                    mean_type=StatisticMeanType.NONE,
                     has_sum=True,
                     name=self._statistic_name_individual(area, metric),
                     source=DOMAIN,
@@ -421,7 +425,7 @@ class StatisticsInserter:
                     )
 
                 stat_metadata = StatisticMetaData(
-                    has_mean=False,
+                    mean_type=StatisticMeanType.NONE,
                     has_sum=True,
                     name=f"{self.config_entry.title} {name}".strip(),
                     source=DOMAIN,
@@ -506,7 +510,7 @@ class StatisticsInserter:
             }
             for field_name in ("min", "max", "mean"):
                 if (base_field := base_stat.get(field_name, None)) is not None:
-                    base_field = cast(float, base_field)
+                    base_field = cast("float", base_field)
                     new_stat[field_name] = transform_datapoint(base_field)
             new_stats.append(StatisticData(**new_stat))  # type: ignore[typeddict-item]
 
