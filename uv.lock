@@ -791,7 +791,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "async-lru", specifier = ">=2.0.4" },
-    { name = "oocone", specifier = "==0.6.1" },
+    { name = "oocone", specifier = "==0.6.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -1233,15 +1233,15 @@ wheels = [
 
 [[package]]
 name = "oocone"
-version = "0.6.1"
+version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "beautifulsoup4" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ee/19/3763e6fe6d4b924df5185cc100a8fe91c4b11849bcddc5465722c99793d5/oocone-0.6.1.tar.gz", hash = "sha256:b4655f4c005cc82d3c9fde8fb067bee7faf675f261714e1c6815b6d8ab4a22b7", size = 100947, upload-time = "2025-05-18T20:26:21.337Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/2f/981473f4c81aff5364a1e898a048cf0ad5ac678a030262731b706b818bd5/oocone-0.6.2.tar.gz", hash = "sha256:05e84437135c7d873b266458a2286b02cbdfa79fa5825ce8c229ad179efa57a2", size = 100902, upload-time = "2025-05-20T06:41:38.005Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/56/02fc39c5b7fa33f4c75841aa0ef05613618321da29ab9f0f1349f0f3a511/oocone-0.6.1-py3-none-any.whl", hash = "sha256:cd4b60f6c9149dc7528da6490347be863281f184207e883f13fff6f9a255bf04", size = 17851, upload-time = "2025-05-18T20:26:19.961Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/29/abb49f42c48feef5bb0094bb4d5c3596e66f0a31e331de7cc6f1e1349b0c/oocone-0.6.2-py3-none-any.whl", hash = "sha256:ca3159391f1cd9f103112e6c264f42d0e71cabb96ca6528af456b98b08c1b4f0", size = 17850, upload-time = "2025-05-20T06:41:36.643Z" },
 ]
 
 [[package]]
