@@ -8,7 +8,7 @@ readme = "README.md"
 license = { text = "MIT" }
 dependencies = [
     "async-lru>=2.0.4",
-    "oocone==0.6.1",
+    "oocone==0.6.2",
 ]
 
 [build-system]

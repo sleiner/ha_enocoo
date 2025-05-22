@@ -8,7 +8,7 @@ https://github.com/sleiner/ha_enocoo
 from __future__ import annotations
 
 import datetime as dt
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from async_lru import alru_cache
 from homeassistant.const import CONF_PASSWORD, CONF_URL, CONF_USERNAME, Platform
@@ -22,7 +22,10 @@ from .coordinator import EnocooUpdateCoordinator
 from .data import EnocooRuntimeData
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.core import HomeAssistant
+    from oocone.model import Area
 
     from .data import EnocooConfigEntry
 
@@ -38,13 +41,12 @@ async def async_setup_entry(
 ) -> bool:
     """Set up this integration using UI."""
     enocoo = CachedEnocoo(
-        Auth(
+        auth_factory=lambda: Auth(
             base_url=entry.data[CONF_URL],
             username=entry.data[CONF_USERNAME],
             password=entry.data[CONF_PASSWORD],
             websession=async_create_clientsession(hass),
-        ),
-        timezone=dt_util.get_default_time_zone(),
+        )
     )
     coordinator = EnocooUpdateCoordinator(hass=hass, config_entry=entry, enocoo=enocoo)
     entry.runtime_data = EnocooRuntimeData(
@@ -81,6 +83,13 @@ async def async_reload_entry(
 class CachedEnocoo(Enocoo):
     """Subclass of oocone.Enocoo with appropriate caching for our use case."""
 
+    def __init__(self, auth_factory: Callable[[], Auth]) -> None:
+        """Create a new instane."""
+        self._auth_factory = auth_factory
+        super().__init__(
+            auth=self._auth_factory(), timezone=dt_util.get_default_time_zone()
+        )
+
     __meter_cache = chain_decorators(
         alru_cache(
             # TTL should be close to but less then the 15 min polling interval:
@@ -95,8 +104,27 @@ class CachedEnocoo(Enocoo):
         copy_result(deep=False),
     )
 
-    get_areas = alru_cache(ttl=dt.timedelta(hours=23).seconds)(Enocoo.get_areas)
     get_quarter_photovoltaic_data = __meter_cache(Enocoo.get_quarter_photovoltaic_data)
     _get_individual_consumption_uncompensated = __meter_cache(
         Enocoo._get_individual_consumption_uncompensated  # noqa: SLF001
     )
+
+    # The list of areas is special: It is only ever refreshed after a login. Since we
+    # also read the dates for which data is available from the returned data, we need to
+    # ensure that we re-login once daily. To do this, we cache the result of
+    # Enocoo.get_areas(), but add the current date as a cache key. On every cache miss,
+    # the web session is reset, so we log in again.
+
+    @override
+    async def get_areas(self) -> list[Area]:
+        return await self.__get_areas(
+            _current_date=dt.datetime.now(tz=dt_util.get_default_time_zone()).date()
+        )
+
+    @alru_cache(maxsize=1)
+    async def __get_areas(self, *, _current_date: dt.date) -> list[Area]:
+        # The API's return value for the areas is only refreshed after login, so we log
+        # in again:
+        self.auth = self._auth_factory()
+
+        return await super().get_areas()
