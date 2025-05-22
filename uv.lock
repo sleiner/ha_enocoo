@@ -771,7 +771,7 @@ wheels = [
 
 [[package]]
 name = "ha-enocoo"
-version = "0.7.1"
+version = "0.7.2"
 source = { editable = "." }
 dependencies = [
     { name = "async-lru" },
