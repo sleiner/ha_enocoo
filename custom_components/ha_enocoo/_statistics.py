@@ -9,7 +9,6 @@ from itertools import groupby
 from statistics import mean
 from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
-from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.models import (
     StatisticData,
     StatisticMeanType,
@@ -22,9 +21,11 @@ from homeassistant.components.recorder.statistics import (
     statistics_during_period,
 )
 from homeassistant.const import CONF_NAME
+from homeassistant.helpers.recorder import get_instance
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util import dt as dt_util
 from homeassistant.util import slugify
+from homeassistant.util.unit_conversion import EnergyConverter, VolumeConverter
 from oocone.model import (
     Area,
     Consumption,
@@ -80,14 +81,14 @@ class StatisticsInserter:
                         area, metric(self.enocoo)
                     )
 
-            for name, id_suffix, pv_attribute in (
-                ("Siedlung Stromverbrauch",  "quarter_consumption",      "consumption"),
-                ("Siedlung Stromproduktion", "quarter_generation",       "generation"),
-                ("Siedlung Netzbezug",       "quarter_supply_from_grid", "calculated_supply_from_grid"),  # noqa: E501
-                ("Siedlung Netzeinspeisung", "quarter_feed_into_grid",   "calculated_feed_into_grid"),  # noqa: E501
+            for name, id_suffix, pv_attribute, unit_class in (
+                ("Siedlung Stromverbrauch",  "quarter_consumption",      "consumption",                 EnergyConverter.UNIT_CLASS),  # noqa: E501
+                ("Siedlung Stromproduktion", "quarter_generation",       "generation",                  EnergyConverter.UNIT_CLASS),  # noqa: E501
+                ("Siedlung Netzbezug",       "quarter_supply_from_grid", "calculated_supply_from_grid", EnergyConverter.UNIT_CLASS),  # noqa: E501
+                ("Siedlung Netzeinspeisung", "quarter_feed_into_grid",   "calculated_feed_into_grid",   EnergyConverter.UNIT_CLASS),  # noqa: E501
             ):  # fmt:skip
                 await self._insert_quarter_photovoltaic_statistics(
-                    name, id_suffix, pv_attribute
+                    name, id_suffix, pv_attribute, unit_class
                 )
 
             for subentry in self.config_entry.subentries.values():
@@ -312,9 +313,21 @@ class StatisticsInserter:
                     name=self._statistic_name_individual(area, consumption_type),
                     source=DOMAIN,
                     statistic_id=statistic_id,
+                    unit_class=self._consumption_type_to_unit_class(consumption_type),
                     unit_of_measurement=unit,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
+
+    @staticmethod
+    def _consumption_type_to_unit_class(consumption_type: ConsumptionType) -> str:
+        match consumption_type:
+            case ConsumptionType.ELECTRICITY | ConsumptionType.HEAT:
+                return EnergyConverter.UNIT_CLASS
+            case ConsumptionType.WATER_COLD | ConsumptionType.WATER_HOT:
+                return VolumeConverter.UNIT_CLASS
+
+        msg = "Unknown consumption type"
+        raise NotImplementedError(msg)
 
     async def _insert_individual_photovoltaic_statistics(
         self, area: Area, metric: IndividualCalculatedMetric
@@ -364,6 +377,7 @@ class StatisticsInserter:
                     name=self._statistic_name_individual(area, metric),
                     source=DOMAIN,
                     statistic_id=statistic_id,
+                    unit_class=metric.unit_class,
                     unit_of_measurement=unit,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
@@ -373,6 +387,7 @@ class StatisticsInserter:
         name: str,
         id_suffix: str,
         pv_summary_attribute_name: str,
+        unit_class: str,
     ) -> None:
         statistic_id = self._statistic_id(id_suffix)
 
@@ -425,6 +440,7 @@ class StatisticsInserter:
                     source=DOMAIN,
                     statistic_id=statistic_id,
                     unit_of_measurement=unit,
+                    unit_class=unit_class,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
 
@@ -622,6 +638,11 @@ class IndividualCalculatedMetric(ABC):
     def name_suffix(self) -> str:
         """Suffix for the statistic name, identifying the metric."""
 
+    @property
+    @abstractmethod
+    def unit_class(self) -> str:
+        """Unit class (see homeassistant.util.unit_conversion)."""
+
     @abstractmethod
     def calculate_datapoint(
         self,
@@ -644,7 +665,10 @@ class IndividualCalculatedMetric(ABC):
             }
 
         daily_consumption = await self.enocoo.get_individual_consumption(
-            ConsumptionType.ELECTRICITY, area_id=area.id, interval="day", during=date
+            consumption_type=ConsumptionType.ELECTRICITY,
+            area_id=area.id,
+            interval="day",
+            during=date,
         )
         consumption_by_hour = group_by_hour(daily_consumption)
 
@@ -765,15 +789,20 @@ class IndividualCalculatedMetric(ABC):
 
 
 class IndividualSupplyFromPhotovoltaic(IndividualCalculatedMetric):
-    @override
     @property
+    @override
     def id_suffix(self) -> str:
         return "supply_from_pv"
 
-    @override
     @property
+    @override
     def name_suffix(self) -> str:
         return "PV-Eigenverbrauch"
+
+    @property
+    @override
+    def unit_class(self) -> str:
+        return EnergyConverter.UNIT_CLASS
 
     @override
     def calculate_datapoint(
@@ -804,15 +833,20 @@ class IndividualSupplyFromPhotovoltaic(IndividualCalculatedMetric):
 
 
 class IndividualSupplyFromGrid(IndividualCalculatedMetric):
-    @override
     @property
+    @override
     def id_suffix(self) -> str:
         return "supply_from_grid"
 
-    @override
     @property
+    @override
     def name_suffix(self) -> str:
         return "Netzbezug"
+
+    @property
+    @override
+    def unit_class(self) -> str:
+        return EnergyConverter.UNIT_CLASS
 
     @override
     def calculate_datapoint(
