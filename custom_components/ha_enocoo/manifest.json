@@ -1,22 +1,13 @@
 {
-  "domain": "ha_enocoo",
-  "name": "enocoo",
-  "codeowners": [
-    "@sleiner"
-  ],
-  "config_flow": true,
-  "dependencies": [
-    "recorder"
-  ],
-  "documentation": "https://github.com/sleiner/ha_enocoo",
-  "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/sleiner/ha_enocoo/issues",
-  "loggers": [
-    "oocone"
-  ],
-  "requirements": [
-    "async-lru>=2.0.5",
-    "oocone==0.6.4"
-  ],
-  "version": "0.7.2"
+    "domain": "ha_enocoo",
+    "name": "enocoo",
+    "codeowners": ["@sleiner"],
+    "config_flow": true,
+    "dependencies": ["recorder"],
+    "documentation": "https://github.com/sleiner/ha_enocoo",
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/sleiner/ha_enocoo/issues",
+    "loggers": ["oocone"],
+    "requirements": ["async-lru>=2.0.5", "oocone==0.6.4"],
+    "version": "0.7.3"
 }

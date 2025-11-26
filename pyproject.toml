@@ -1,15 +1,12 @@
 [project]
 name = "ha_enocoo"
-version = "0.7.2"
+version = "0.7.3"
 description = "Custom Home Assistant integration for enocoo"
 authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
 requires-python = ">=3.13.2"
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = [
-    "async-lru>=2.0.5",
-    "oocone==0.6.4"
-]
+dependencies = ["async-lru>=2.0.5", "oocone==0.6.4"]
 
 [build-system]
 requires = ["pdm-backend"]
@@ -34,6 +31,4 @@ explicit_package_bases = true
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 addopts = "--ignore=.nox --ignore=.venv"
-filterwarnings = [
-    "ignore:::homeassistant",
-]
+filterwarnings = ["ignore:::homeassistant"]
