@@ -79,29 +79,57 @@
             "quarter_energy_consumption": {
                 "name": "Siedlungsverbrauch",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "Auslesezeitpunkt"
+                    "measurement_start": {
+                        "name": "Startzeitpunkt der Messung"
+                    },
+                    "measurement_end": {
+                        "name": "Endzeitpunkt der Messung"
+                    },
+                    "measurement_duration": {
+                        "name": "Dauer der Messung"
                     }
                 }
             },
             "quarter_energy_production": {
                 "name": "Siedlungsproduktion",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "Auslesezeitpunkt"
+                    "measurement_start": {
+                        "name": "Startzeitpunkt der Messung"
+                    },
+                    "measurement_end": {
+                        "name": "Endzeitpunkt der Messung"
+                    },
+                    "measurement_duration": {
+                        "name": "Dauer der Messung"
                     }
                 }
             },
             "quarter_power_surplus": {
                 "name": "Leistungsüberschuss Siedlung",
                 "state_attributes": {
-                    "readout_time": { "name": "Auslesezeitpunkt" }
+                    "measurement_start": {
+                        "name": "Startzeitpunkt der Messung"
+                    },
+                    "measurement_end": {
+                        "name": "Endzeitpunkt der Messung"
+                    },
+                    "measurement_duration": {
+                        "name": "Dauer der Messung"
+                    }
                 }
             },
             "per_share_power_surplus": {
                 "name": "Leistungsüberschuss {share_name}",
                 "state_attributes": {
-                    "readout_time": { "name": "Auslesezeitpunkt" },
+                    "measurement_start": {
+                        "name": "Startzeitpunkt der Messung"
+                    },
+                    "measurement_end": {
+                        "name": "Endzeitpunkt der Messung"
+                    },
+                    "measurement_duration": {
+                        "name": "Dauer der Messung"
+                    },
                     "shares": { "name": "Miteigentumsanteile" },
                     "shares_total": { "name": "Miteigentumsanteile insgesamt" }
                 }
@@ -109,16 +137,28 @@
             "self_sufficiency": {
                 "name": "Autarkiegrad",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "Auslesezeitpunkt"
+                    "measurement_start": {
+                        "name": "Startzeitpunkt der Messung"
+                    },
+                    "measurement_end": {
+                        "name": "Endzeitpunkt der Messung"
+                    },
+                    "measurement_duration": {
+                        "name": "Dauer der Messung"
                     }
                 }
             },
             "own_consumption": {
                 "name": "Eigenverbrauchsanteil",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "Auslesezeitpunkt"
+                    "measurement_start": {
+                        "name": "Startzeitpunkt der Messung"
+                    },
+                    "measurement_end": {
+                        "name": "Endzeitpunkt der Messung"
+                    },
+                    "measurement_duration": {
+                        "name": "Dauer der Messung"
                     }
                 }
             }
