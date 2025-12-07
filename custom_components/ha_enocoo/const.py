@@ -12,3 +12,5 @@ ATTR_ENOCOO_AREA: Final = "enocoo_area"
 
 CONF_NUM_SHARES: Final = "num_shares"
 CONF_NUM_SHARES_TOTAL: Final = "num_shares_total"
+
+SUBENTRY_TYPE_OWNERSHIP_SHARES: Final = "ownership_shares"

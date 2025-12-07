@@ -79,29 +79,57 @@
             "quarter_energy_consumption": {
                 "name": "Quarter consumption",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "readout time"
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
                     }
                 }
             },
             "quarter_energy_production": {
                 "name": "Quarter production",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "readout time"
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
                     }
                 }
             },
             "quarter_power_surplus": {
                 "name": "Quarter power surplus",
                 "state_attributes": {
-                    "readout_time": { "name": "readout time" }
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
                 }
             },
             "per_share_power_surplus": {
                 "name": "{share_name} power surplus",
                 "state_attributes": {
-                    "readout_time": { "name": "readout time" },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    },
                     "shares": { "name": "shares" },
                     "shares_total": { "name": "shares total" }
                 }
@@ -109,16 +137,28 @@
             "self_sufficiency": {
                 "name": "Self-sufficiency",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "readout time"
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
                     }
                 }
             },
             "own_consumption": {
                 "name": "Own consumption",
                 "state_attributes": {
-                    "readout_time": {
-                        "name": "readout time"
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
                     }
                 }
             }

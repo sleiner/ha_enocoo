@@ -5,7 +5,7 @@ from collections.abc import Callable, Coroutine, Generator, Iterable, Sequence
 from copy import copy, deepcopy
 from typing import Any
 
-from oocone.model import Consumption, PhotovoltaicSummary
+from oocone.model import Area, Consumption, ConsumptionType, PhotovoltaicSummary
 
 
 async def bisect[T](
@@ -115,3 +115,12 @@ def copy_result[**P, T](
         return wrapped
 
     return make_wrapper
+
+
+def relevant_consumption_types(area: Area) -> list[ConsumptionType]:
+    """Return relevant consumption types for a given area in the enocoo dashboard."""
+    if area.name.startswith("SP"):  # parking space, only electricity is available
+        relevant_consumption_types = [ConsumptionType.ELECTRICITY]
+    else:
+        relevant_consumption_types = list(ConsumptionType)
+    return relevant_consumption_types
