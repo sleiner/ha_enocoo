@@ -18,6 +18,7 @@ from homeassistant.util import dt as dt_util
 from oocone import Auth, Enocoo
 
 from ._util import chain_decorators, copy_result
+from .const import UPDATE_INTERVAL
 from .coordinator import EnocooUpdateCoordinator
 from .data import EnocooRuntimeData
 
@@ -92,8 +93,8 @@ class CachedEnocoo(Enocoo):
 
     __meter_cache = chain_decorators(
         alru_cache(
-            # TTL should be close to but less then the 15 min polling interval:
-            ttl=dt.timedelta(minutes=14).seconds,
+            # TTL should be close to but less than the polling interval:
+            ttl=UPDATE_INTERVAL.seconds - 60,
             # we have a fairly short TTL, but possibly much data to query (think 5 years
             # of daily data), so let's store a large number of items in the cache here.
             maxsize=5000,

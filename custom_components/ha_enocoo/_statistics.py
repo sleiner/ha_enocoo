@@ -323,7 +323,7 @@ class StatisticsInserter:
     async def _insert_individual_photovoltaic_statistics(
         self, area: Area, metric: IndividualCalculatedMetric
     ) -> None:
-        statistic_id = self._statistic_id(metric.id_suffix, area=area)
+        statistic_id = self._statistic_id(metric.id_suffix(), area=area)
         (
             expecting_newer_data,
             dates_to_query,
@@ -337,7 +337,7 @@ class StatisticsInserter:
             LOGGER.debug(
                 "%s statistics in %s for the next full hour are not yet available."
                 " Skipping statistics collection...",
-                metric.id_suffix,
+                metric.id_suffix(),
                 area.name,
             )
             return
@@ -368,7 +368,7 @@ class StatisticsInserter:
                     name=self._statistic_name_individual(area, metric),
                     source=DOMAIN,
                     statistic_id=statistic_id,
-                    unit_class=metric.unit_class,
+                    unit_class=metric.unit_class(),
                     unit_of_measurement=unit,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
@@ -554,7 +554,7 @@ class StatisticsInserter:
         elif statistic_type == ConsumptionType.HEAT:
             name_suffix = "Wärme"
         elif isinstance(statistic_type, IndividualCalculatedMetric):
-            name_suffix = statistic_type.name_suffix
+            name_suffix = statistic_type.name_suffix_de()
         else:
             name_suffix = str(statistic_type)
 

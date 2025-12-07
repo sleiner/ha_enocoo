@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import meter, quarter, traffic_light
+from . import consumption, meter, quarter, traffic_light
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -19,5 +19,5 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
-    for category in traffic_light, quarter, meter:
+    for category in consumption, traffic_light, quarter, meter:
         await category.async_setup_entry(hass, entry, async_add_entities)
