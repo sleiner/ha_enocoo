@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import oocone
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
+    from oocone import Enocoo, model
 
     from .coordinator import EnocooUpdateCoordinator
 
+    type DailyConsumptionForArea = dict[model.ConsumptionType, model.Consumption | None]
+    type DailyConsumption = dict[model.Area, DailyConsumptionForArea]
 
 type EnocooConfigEntry = ConfigEntry[EnocooRuntimeData]
 
@@ -20,7 +22,7 @@ type EnocooConfigEntry = ConfigEntry[EnocooRuntimeData]
 class EnocooRuntimeData:
     """Data for the enocoo integration."""
 
-    client: oocone.Enocoo
+    client: Enocoo
     coordinator: EnocooUpdateCoordinator
     integration: Integration
 
@@ -29,6 +31,7 @@ class EnocooRuntimeData:
 class EnocooDashboardData:
     """Data read from the enocoo dashboard."""
 
-    traffic_light_status: oocone.model.TrafficLightStatus
-    meter_table: list[oocone.model.MeterStatus]
-    current_photovoltaic_data: oocone.model.PhotovoltaicSummary | None
+    traffic_light_status: model.TrafficLightStatus
+    meter_table: list[model.MeterStatus]
+    current_photovoltaic_data: model.PhotovoltaicSummary | None
+    current_individual_consumption: DailyConsumption
