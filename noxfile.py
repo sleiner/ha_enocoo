@@ -9,7 +9,7 @@ import nox
 nox.options.default_venv_backend = "uv"
 nox.options.reuse_venv = "yes"
 
-DEFAULT_PYTHON_VERSION = "3.13"
+DEFAULT_PYTHON_VERSION = "3.14"
 
 
 @cache

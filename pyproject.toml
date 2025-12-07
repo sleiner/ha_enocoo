@@ -3,27 +3,24 @@ name = "ha_enocoo"
 version = "0.7.3"
 description = "Custom Home Assistant integration for enocoo"
 authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
-requires-python = ">=3.13.2"
+requires-python = ">=3.14.2"
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = ["async-lru>=2.0.5", "oocone==0.6.4"]
+dependencies = ["async-lru>=2.3.0", "oocone==0.6.5"]
 
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["uv_build>=0.11.19,<0.12"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "homeassistant==2025.11.3",
-    "mypy>=1.18.2",
-    "nox>=2025.11.2",
-    "pytest>=9.0.1",
-    "pytest-asyncio>=1.3.0",
-    "ruff>=0.14.6",
+    "homeassistant==2026.6.1",
+    "mypy>=2.1.0",
+    "nox>=2026.4.10",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.15.16",
 ]
-
-[tool.pdm.build]
-package-dir = "custom_components"
 
 [tool.mypy]
 explicit_package_bases = true
@@ -32,3 +29,6 @@ explicit_package_bases = true
 asyncio_default_fixture_loop_scope = "function"
 addopts = "--ignore=.nox --ignore=.venv"
 filterwarnings = ["ignore:::homeassistant"]
+
+[tool.uv.build-backend]
+module-root = "custom_components"
