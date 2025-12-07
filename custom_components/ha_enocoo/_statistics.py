@@ -317,7 +317,7 @@ class StatisticsInserter:
             case ConsumptionType.WATER_COLD | ConsumptionType.WATER_HOT:
                 return VolumeConverter.UNIT_CLASS
 
-        msg = "Unknown consumption type"
+        msg = f"Unknown consumption type: {consumption_type}"
         raise NotImplementedError(msg)
 
     async def _insert_individual_photovoltaic_statistics(
