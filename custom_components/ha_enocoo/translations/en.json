@@ -45,6 +45,9 @@
         }
     },
     "device": {
+        "consumption": {
+            "name": "Consumption {area_name}"
+        },
         "meter_with_id": {
             "name": "Meter #{meter_id}"
         },
@@ -54,6 +57,108 @@
     },
     "entity": {
         "sensor": {
+            "electricity_flow": {
+                "name": "Wattage",
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
+                }
+            },
+            "electricity_supply_from_grid_flow": {
+                "name": "Wattage from grid",
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
+                }
+            },
+            "electricity_supply_from_pv_flow": {
+                "name": "Wattage from PV",
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
+                }
+            },
+            "heat_flow": {
+                "name": "Heat power",
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
+                }
+            },
+            "water_cold_flow": {
+                "name": "Cold water flow",
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
+                }
+            },
+            "water_hot_flow": {
+                "name": "Hot water flow",
+                "state_attributes": {
+                    "enocoo_area": {
+                        "name": "Assigned area in enocoo dashboard"
+                    },
+                    "measurement_start": {
+                        "name": "measurement start"
+                    },
+                    "measurement_end": {
+                        "name": "measurement end"
+                    },
+                    "measurement_duration": {
+                        "name": "measurement duration"
+                    }
+                }
+            },
             "meter": {
                 "state_attributes": {
                     "enocoo_area": {
