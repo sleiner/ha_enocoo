@@ -1,9 +1,8 @@
-"""Sensor platform for enocoo."""
+"""Sensor entities for quarter-wide data (as well as per ownership shares)."""
 
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import replace
 from typing import TYPE_CHECKING, override
 
 from homeassistant.components.sensor import (
@@ -14,13 +13,18 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_NAME, PERCENTAGE, UnitOfPower
 from homeassistant.helpers.device_registry import DeviceInfo
-from oocone.model import Quantity, UnknownT
+from oocone.model import Quantity
 
-from custom_components.ha_enocoo.const import ATTR_ENOCOO_AREA, ATTR_READOUT_TIME
-
-from ._util import all_the_same
-from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL
-from .entity import EnocooEntity
+from .._util import all_the_same
+from ..const import (
+    ATTR_MEASUREMENT_DURATION,
+    ATTR_MEASUREMENT_END,
+    ATTR_MEASUREMENT_START,
+    CONF_NUM_SHARES,
+    CONF_NUM_SHARES_TOTAL,
+    SUBENTRY_TYPE_OWNERSHIP_SHARES,
+)
+from ..entity import EnocooEntity
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -28,12 +32,10 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-    from oocone.model import MeterStatus, PhotovoltaicSummary
+    from oocone.model import PhotovoltaicSummary
 
-    from custom_components.ha_enocoo.data import EnocooDashboardData
-
-    from .coordinator import EnocooUpdateCoordinator
-    from .data import EnocooConfigEntry
+    from ..coordinator import EnocooUpdateCoordinator
+    from ..data import EnocooConfigEntry
 
 
 async def async_setup_entry(
@@ -42,206 +44,28 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
-    dashboard_data: EnocooDashboardData = entry.runtime_data.coordinator.data
     async_add_entities(
         [
-            EnergyTrafficLightColorEntity(
-                coordinator=entry.runtime_data.coordinator,
-                entity_description=SensorEntityDescription(
-                    key="energy_traffic_light",
-                    name="Energy traffic light",
-                    icon="mdi:traffic-light",
-                    device_class=SensorDeviceClass.ENUM,
-                ),
-            ),
-            EnergyTrafficLightPriceEntity(
-                coordinator=entry.runtime_data.coordinator,
-                entity_description=SensorEntityDescription(
-                    key="calculated_electricity_price",
-                    name="Calculated electricity price",
-                    icon="mdi:currency-eur",
-                    device_class=SensorDeviceClass.MONETARY,
-                    suggested_display_precision=2,
-                ),
-            ),
             QuarterEnergyProductionEntity(entry.runtime_data.coordinator),
             QuarterEnergyConsumptionEntity(entry.runtime_data.coordinator),
             QuarterPowerSurplusEntity(entry.runtime_data.coordinator),
             QuarterEnergySelfSufficiencyEntity(entry.runtime_data.coordinator),
             QuarterEnergyOwnConsumptionEntity(entry.runtime_data.coordinator),
         ]
-        + [
-            MeterEntity.from_meter_status(
-                meter_status=status,
-                coordinator=entry.runtime_data.coordinator,
-            )
-            for status in dashboard_data.meter_table
-        ]
     )
     for subentry_id, subentry in entry.subentries.items():
-        match subentry.subentry_type:
-            case "ownership_shares":
-                async_add_entities(
-                    [
-                        PerSharePowerSurplusEntity(
-                            entry.runtime_data.coordinator,
-                            share_name=subentry.data[CONF_NAME],
-                            num_shares=subentry.data[CONF_NUM_SHARES],
-                            num_shares_total=subentry.data[CONF_NUM_SHARES_TOTAL],
-                        )
-                    ],
-                    config_subentry_id=subentry_id,
-                )
-
-
-class EnergyTrafficLightEntity(EnocooEntity, SensorEntity):
-    """Energy traffic light."""
-
-    def __init__(
-        self,
-        coordinator: EnocooUpdateCoordinator,
-        entity_description: SensorEntityDescription,
-    ) -> None:
-        """Initialize the sensor class."""
-        super().__init__(entity_id=entity_description.key, coordinator=coordinator)
-        self._attr_device_info = DeviceInfo(
-            identifiers={
-                (
-                    coordinator.config_entry.domain,
-                    coordinator.config_entry.entry_id,
-                ),
-            },
-            manufacturer="enocoo",
-        )
-
-        self.entity_description = entity_description
-        self.translation_key = entity_description.key
-
-
-class EnergyTrafficLightColorEntity(EnergyTrafficLightEntity):
-    """Color of the energy traffic light."""
-
-    @override
-    @property
-    def native_value(self) -> str | None:
-        return str(self.dashboard_data.traffic_light_status.color)
-
-
-class EnergyTrafficLightPriceEntity(EnergyTrafficLightEntity):
-    """Energy price indicated by the traffic light."""
-
-    def _normalized_price(self) -> Quantity | UnknownT:
-        price = self.dashboard_data.traffic_light_status.current_energy_price
-
-        if price != "UNKNOWN" and price.unit == "ct/kWh":
-            price = Quantity(value=price.value / 100.0, unit="€/kWh")
-
-        return price
-
-    @override
-    @property
-    def native_value(self) -> float | None:
-        price = self._normalized_price()
-        if price == "UNKNOWN":
-            return None
-        return price.value
-
-    @override
-    @property
-    def native_unit_of_measurement(self) -> str | None:
-        price = self._normalized_price()
-        if price == "UNKNOWN":
-            return None
-        return price.unit
-
-
-class MeterEntity(EnocooEntity, SensorEntity):
-    """Entity for utility meters."""
-
-    def __init__(
-        self,
-        meter_id: str,
-        name_in_dashboard: str,
-        coordinator: EnocooUpdateCoordinator,
-        entity_description: SensorEntityDescription,
-    ) -> None:
-        """Initialize."""
-        super().__init__(entity_id=name_in_dashboard, coordinator=coordinator)
-        self.meter_id = meter_id
-        self.name_in_dashboard = name_in_dashboard
-        self.entity_description = entity_description
-        self.translation_key = "meter"
-
-        self._attr_device_info = DeviceInfo(
-            identifiers={
-                (
-                    coordinator.config_entry.domain,
-                    name_in_dashboard,
-                ),
-            },
-            serial_number=meter_id,
-            name=f"Meter #{meter_id}",
-            translation_key="meter_with_id",
-            translation_placeholders={"meter_id": meter_id},
-        )
-
-    @staticmethod
-    def from_meter_status(
-        meter_status: MeterStatus,
-        coordinator: EnocooUpdateCoordinator,
-    ) -> MeterEntity:
-        """Create a MeterEntity from a MeterStatus instance returned by oocone."""
-        description = SensorEntityDescription(
-            key=meter_status.name,
-            name=meter_status.name.replace(f" {meter_status.area}", ""),
-            state_class=SensorStateClass.TOTAL_INCREASING,
-            icon="mdi:meter-electric",
-        )
-        if " Kaltwasser " in meter_status.name or " Warmwasser " in meter_status.name:
-            description = replace(description, device_class=SensorDeviceClass.WATER)
-        elif " Strom " in meter_status.name:
-            description = replace(description, device_class=SensorDeviceClass.ENERGY)
-        elif " Wärme " in meter_status.name:
-            description = replace(
-                description,
-                device_class=SensorDeviceClass.ENERGY,
-                icon="mdi:meter-gas",
+        if subentry.subentry_type == SUBENTRY_TYPE_OWNERSHIP_SHARES:
+            async_add_entities(
+                [
+                    PerSharePowerSurplusEntity(
+                        entry.runtime_data.coordinator,
+                        share_name=subentry.data[CONF_NAME],
+                        num_shares=subentry.data[CONF_NUM_SHARES],
+                        num_shares_total=subentry.data[CONF_NUM_SHARES_TOTAL],
+                    )
+                ],
+                config_subentry_id=subentry_id,
             )
-
-        return MeterEntity(
-            meter_id=meter_status.meter_id,
-            name_in_dashboard=meter_status.name,
-            coordinator=coordinator,
-            entity_description=description,
-        )
-
-    @property
-    @override
-    def native_unit_of_measurement(self) -> str:
-        return self._current_meter_status().reading.unit
-
-    @property
-    @override
-    def native_value(self) -> float | None:
-        """Return the native value of the sensor."""
-        return self._current_meter_status().reading.value
-
-    @property
-    @override
-    def extra_state_attributes(self) -> Mapping[str, Any]:
-        meter_status = self._current_meter_status()
-
-        return {
-            ATTR_ENOCOO_AREA: meter_status.area,
-            ATTR_READOUT_TIME: meter_status.timestamp,
-        }
-
-    def _current_meter_status(self) -> MeterStatus:
-        return next(
-            meter
-            for meter in self.dashboard_data.meter_table
-            if meter.meter_id == self.meter_id and meter.name == self.name_in_dashboard
-        )
 
 
 class _QuarterEnergyEntity(EnocooEntity, SensorEntity):
@@ -293,7 +117,9 @@ class _QuarterEnergyEntity(EnocooEntity, SensorEntity):
     def extra_state_attributes(self) -> Mapping[str, Any]:
         if pv_data := self._pv_data:
             return {
-                ATTR_READOUT_TIME: pv_data.start + pv_data.period,
+                ATTR_MEASUREMENT_START: pv_data.start,
+                ATTR_MEASUREMENT_END: pv_data.start + pv_data.period,
+                ATTR_MEASUREMENT_DURATION: str(pv_data.period),
             }
 
         return {}
@@ -385,7 +211,7 @@ class QuarterPowerSurplusEntity(_QuarterEnergyPowerEntity):
             name_in_dashboard="Quarter power surplus",
             key="quarter_power_surplus",
             coordinator=coordinator,
-            icon="mdi:transmission-tower-export",
+            icon="mdi:transmission-tower-import",
         )
 
     @staticmethod
@@ -413,7 +239,7 @@ class PerSharePowerSurplusEntity(_QuarterEnergyPowerEntity):
             name_in_dashboard=f"{share_name} power surplus",
             key="per_share_power_surplus",
             coordinator=coordinator,
-            icon="mdi:transmission-tower-export",
+            icon="mdi:transmission-tower-import",
         )
         self._attr_translation_placeholders = {"share_name": share_name}
         self._num_shares = num_shares

@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import datetime as dt
-from abc import ABC, abstractmethod
 from asyncio import Lock
 from itertools import groupby
-from statistics import mean
-from typing import TYPE_CHECKING, ClassVar, Self, cast, override
+from typing import TYPE_CHECKING, cast
 
 from homeassistant.components.recorder.models import (
     StatisticData,
@@ -34,7 +32,8 @@ from oocone.model import (
     Quantity,
 )
 
-from ._util import all_the_same, bisect, zip_measurements
+from ._pv_metrics import IndividualCalculatedMetric
+from ._util import bisect, relevant_consumption_types
 from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL, DOMAIN, LOGGER
 from .data import EnocooConfigEntry
 
@@ -71,7 +70,7 @@ class StatisticsInserter:
     async def _insert_statistics(self) -> None:
         async with self.insertion_in_progress:
             for area in await self.enocoo.get_areas():
-                for consumption_type in self.__relevant_consumption_types(area):
+                for consumption_type in relevant_consumption_types(area):
                     await self._insert_individual_consumption_statistics(
                         area=area, consumption_type=consumption_type
                     )
@@ -95,14 +94,6 @@ class StatisticsInserter:
                 match subentry.subentry_type:
                     case "ownership_shares":
                         await self._insert_surplus_per_share_statistics(subentry.data)
-
-    @staticmethod
-    def __relevant_consumption_types(area: Area) -> list[ConsumptionType]:
-        if area.name.startswith("SP"):  # parking space, only electricity is available
-            relevant_consumption_types = [ConsumptionType.ELECTRICITY]
-        else:
-            relevant_consumption_types = list(ConsumptionType)
-        return relevant_consumption_types
 
     async def _find_last_stats(
         self, statistic_id: str, now: dt.datetime
@@ -326,13 +317,13 @@ class StatisticsInserter:
             case ConsumptionType.WATER_COLD | ConsumptionType.WATER_HOT:
                 return VolumeConverter.UNIT_CLASS
 
-        msg = "Unknown consumption type"
+        msg = f"Unknown consumption type: {consumption_type}"
         raise NotImplementedError(msg)
 
     async def _insert_individual_photovoltaic_statistics(
         self, area: Area, metric: IndividualCalculatedMetric
     ) -> None:
-        statistic_id = self._statistic_id(metric.id_suffix, area=area)
+        statistic_id = self._statistic_id(metric.id_suffix(), area=area)
         (
             expecting_newer_data,
             dates_to_query,
@@ -346,7 +337,7 @@ class StatisticsInserter:
             LOGGER.debug(
                 "%s statistics in %s for the next full hour are not yet available."
                 " Skipping statistics collection...",
-                metric.id_suffix,
+                metric.id_suffix(),
                 area.name,
             )
             return
@@ -377,7 +368,7 @@ class StatisticsInserter:
                     name=self._statistic_name_individual(area, metric),
                     source=DOMAIN,
                     statistic_id=statistic_id,
-                    unit_class=metric.unit_class,
+                    unit_class=metric.unit_class(),
                     unit_of_measurement=unit,
                 )
                 async_add_external_statistics(self.hass, stat_metadata, new_stats)
@@ -563,7 +554,7 @@ class StatisticsInserter:
         elif statistic_type == ConsumptionType.HEAT:
             name_suffix = "Wärme"
         elif isinstance(statistic_type, IndividualCalculatedMetric):
-            name_suffix = statistic_type.name_suffix
+            name_suffix = statistic_type.name_suffix_de()
         else:
             name_suffix = str(statistic_type)
 
@@ -614,262 +605,3 @@ class StatisticsInserter:
             date = dt.date(date.year + year_increment, month_zerobased + 1, 1)
 
         return firsts_of_months
-
-
-Datapoint = Consumption
-
-
-class IndividualCalculatedMetric(ABC):
-    metrics: ClassVar[list[type[Self]]] = []
-
-    def __init_subclass__(cls) -> None:
-        IndividualCalculatedMetric.metrics.append(cls)
-
-    def __init__(self, enocoo: oocone.Enocoo) -> None:
-        self.enocoo = enocoo
-
-    @property
-    @abstractmethod
-    def id_suffix(self) -> str:
-        """Suffix for the statistic ID, identifying the metric."""
-
-    @property
-    @abstractmethod
-    def name_suffix(self) -> str:
-        """Suffix for the statistic name, identifying the metric."""
-
-    @property
-    @abstractmethod
-    def unit_class(self) -> str:
-        """Unit class (see homeassistant.util.unit_conversion)."""
-
-    @abstractmethod
-    def calculate_datapoint(
-        self,
-        start: dt.datetime,
-        period: dt.timedelta,
-        electricity_consumption: Consumption,
-        pv: PhotovoltaicSummary,
-    ) -> Datapoint:
-        """Calculate a single datapoint for a given point in time."""
-
-    async def get_daily_datapoints(self, area: Area, date: dt.date) -> list[Datapoint]:
-        """Return all datapoints for a given day and area."""
-
-        def group_by_hour[T: Consumption | PhotovoltaicSummary](
-            reads: Sequence[T],
-        ) -> dict[int, Sequence[T]]:
-            return {
-                hour: list(reads)
-                for hour, reads in groupby(reads, lambda read: read.start.hour)
-            }
-
-        daily_consumption = await self.enocoo.get_individual_consumption(
-            consumption_type=ConsumptionType.ELECTRICITY,
-            area_id=area.id,
-            interval="day",
-            during=date,
-        )
-        consumption_by_hour = group_by_hour(daily_consumption)
-
-        daily_pv_stats = await self.enocoo.get_quarter_photovoltaic_data(
-            interval="day", during=date
-        )
-        pv_stats_by_hour = group_by_hour(daily_pv_stats)
-
-        datapoints = []
-        last_hour = min(
-            max(consumption_by_hour.keys(), default=0),
-            max(pv_stats_by_hour.keys(), default=0),
-        )
-        for hour in range(last_hour + 1):
-            try:
-                consumptions = consumption_by_hour[hour]
-            except KeyError:
-                LOGGER.error(
-                    "Did not find consumption data for area %s"
-                    " at %s between %02d:00 and %02d:00."
-                    " %s (%s) statistics for this time will be missing!",
-                    area.name,
-                    date.isoformat(),
-                    hour,
-                    hour + 1,
-                    self.name_suffix,
-                    self.id_suffix,
-                )
-                continue
-            try:
-                pv_stats = pv_stats_by_hour[hour]
-            except KeyError:
-                LOGGER.error(
-                    "Did not find photovoltaic data for %s between %02d:00 and %02d:00."
-                    " %s (%s) statistics for this time will be missing!",
-                    date.isoformat(),
-                    hour,
-                    hour + 1,
-                    self.name_suffix,
-                    self.id_suffix,
-                )
-                continue
-            try:
-                datapoints_current_hour = [
-                    self.calculate_datapoint(*args)
-                    for args in zip_measurements(consumptions, pv_stats)
-                ]
-            except ValueError as exc:
-                LOGGER.error(
-                    "Failed matching individual electricity of %s and quarter"
-                    " photovoltaic data while calculating %s data: %s."
-                    " Calculating statistics for the current hour using mean values...",
-                    area.name,
-                    self.id_suffix,
-                    exc,
-                )
-
-                aggregate_start = consumption_by_hour[hour][0].start.replace(minute=0)
-                aggregate_period = dt.timedelta(hours=1)
-
-                aggregate_consumption = Consumption(
-                    start=aggregate_start,
-                    period=aggregate_period,
-                    value=sum(cons.value for cons in consumptions),
-                    unit=all_the_same(cons.unit for cons in consumptions),
-                )
-                aggregate_pv = PhotovoltaicSummary(
-                    start=aggregate_start,
-                    period=aggregate_period,
-                    consumption=Quantity(
-                        value=sum(pv.consumption.value for pv in pv_stats),
-                        unit=all_the_same(pv.consumption.unit for pv in pv_stats),
-                    ),
-                    generation=Quantity(
-                        value=sum(pv.generation.value for pv in pv_stats),
-                        unit=all_the_same(pv.generation.unit for pv in pv_stats),
-                    ),
-                    own_consumption=Quantity(
-                        value=mean(
-                            pv.own_consumption.value
-                            if pv.own_consumption is not None
-                            else 100.0
-                            for pv in pv_stats
-                        ),
-                        unit=all_the_same(
-                            pv.own_consumption.unit
-                            for pv in pv_stats
-                            if pv is not None and pv.own_consumption is not None
-                        ),
-                    ),
-                    self_sufficiency=Quantity(
-                        value=mean(
-                            pv.self_sufficiency.value
-                            if pv.self_sufficiency is not None
-                            else 100.0
-                            for pv in pv_stats
-                        ),
-                        unit=all_the_same(
-                            pv.self_sufficiency.unit
-                            for pv in pv_stats
-                            if pv is not None and pv.self_sufficiency is not None
-                        ),
-                    ),
-                )
-
-                datapoints_current_hour = [
-                    self.calculate_datapoint(
-                        aggregate_start,
-                        aggregate_period,
-                        aggregate_consumption,
-                        aggregate_pv,
-                    )
-                ]
-
-            datapoints += datapoints_current_hour
-
-        return datapoints
-
-
-class IndividualSupplyFromPhotovoltaic(IndividualCalculatedMetric):
-    @property
-    @override
-    def id_suffix(self) -> str:
-        return "supply_from_pv"
-
-    @property
-    @override
-    def name_suffix(self) -> str:
-        return "PV-Eigenverbrauch"
-
-    @property
-    @override
-    def unit_class(self) -> str:
-        return EnergyConverter.UNIT_CLASS
-
-    @override
-    def calculate_datapoint(
-        self,
-        start: dt.datetime,
-        period: dt.timedelta,
-        electricity_consumption: Consumption,
-        pv: PhotovoltaicSummary,
-    ) -> Datapoint:
-        if pv.self_sufficiency is None:
-            pv_supply_ratio = 0.0
-        else:
-            assert pv.self_sufficiency.unit == "%", (  # noqa: S101
-                "own_consumption must be measured in %"
-            )
-            pv_supply_ratio = pv.self_sufficiency.value / 100.0
-
-        # Since self-sufficiency might not always be 0 but contain small deviations, we
-        # need to apply a bit of reasonable rounding:
-        value = round(electricity_consumption.value * pv_supply_ratio, 3)
-
-        return Datapoint(
-            start=start,
-            period=period,
-            value=value,
-            unit=electricity_consumption.unit,
-        )
-
-
-class IndividualSupplyFromGrid(IndividualCalculatedMetric):
-    @property
-    @override
-    def id_suffix(self) -> str:
-        return "supply_from_grid"
-
-    @property
-    @override
-    def name_suffix(self) -> str:
-        return "Netzbezug"
-
-    @property
-    @override
-    def unit_class(self) -> str:
-        return EnergyConverter.UNIT_CLASS
-
-    @override
-    def calculate_datapoint(
-        self,
-        start: dt.datetime,
-        period: dt.timedelta,
-        electricity_consumption: Consumption,
-        pv: PhotovoltaicSummary,
-    ) -> Datapoint:
-        if pv.self_sufficiency is None:
-            pv_supply_ratio = 0.0
-        else:
-            assert pv.self_sufficiency.unit == "%", (  # noqa: S101
-                "own_consumption must be measured in %"
-            )
-            pv_supply_ratio = pv.self_sufficiency.value / 100.0
-
-        # Since self-sufficiency might not always be 0 but contain small deviations, we
-        # need to apply a bit of reasonable rounding:
-        value = round(electricity_consumption.value * (1 - pv_supply_ratio), 3)
-        return Datapoint(
-            start=start,
-            period=period,
-            value=value,
-            unit=electricity_consumption.unit,
-        )

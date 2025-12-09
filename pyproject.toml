@@ -6,7 +6,7 @@ authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
 requires-python = ">=3.13.2"
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = ["async-lru>=2.0.5", "oocone==0.6.4"]
+dependencies = ["async-lru>=2.0.5", "oocone==0.6.5"]
 
 [build-system]
 requires = ["pdm-backend"]
@@ -14,7 +14,7 @@ build-backend = "pdm.backend"
 
 [dependency-groups]
 dev = [
-    "homeassistant==2025.11.3",
+    "homeassistant==2025.12.0",
     "mypy>=1.18.2",
     "nox>=2025.11.2",
     "pytest>=9.0.1",
@@ -31,4 +31,4 @@ explicit_package_bases = true
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 addopts = "--ignore=.nox --ignore=.venv"
-filterwarnings = ["ignore:::homeassistant"]
+filterwarnings = ["ignore:::homeassistant", "ignore:::litellm"]
