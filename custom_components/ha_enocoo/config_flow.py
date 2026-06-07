@@ -21,7 +21,13 @@ from homeassistant.util import dt as dt_util
 from homeassistant.util import slugify
 from oocone import Auth, Enocoo, errors
 
-from .const import CONF_NUM_SHARES, CONF_NUM_SHARES_TOTAL, DOMAIN, LOGGER
+from .const import (
+    CONF_NUM_SHARES,
+    CONF_NUM_SHARES_TOTAL,
+    DOMAIN,
+    LOGGER,
+    SUBENTRY_TYPE_OWNERSHIP_SHARES,
+)
 
 
 class EnocooFlowHandler(ConfigFlow, domain=DOMAIN):
@@ -156,7 +162,7 @@ class EnocooFlowHandler(ConfigFlow, domain=DOMAIN):
     def async_get_supported_subentry_types(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
-        return {"ownership_shares": OwnershipShareSubentryFlowHandler}
+        return {SUBENTRY_TYPE_OWNERSHIP_SHARES: OwnershipShareSubentryFlowHandler}
 
 
 class OwnershipShareSubentryFlowHandler(ConfigSubentryFlow):
