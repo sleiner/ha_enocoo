@@ -104,7 +104,9 @@ class CachedEnocoo(Enocoo):
         copy_result(deep=False),
     )
 
-    get_quarter_photovoltaic_data = __meter_cache(Enocoo.get_quarter_photovoltaic_data)
+    _get_quarter_photovoltaic_data_uncompensated = __meter_cache(
+        Enocoo._get_quarter_photovoltaic_data_uncompensated  # noqa: SLF001
+    )
     _get_individual_consumption_uncompensated = __meter_cache(
         Enocoo._get_individual_consumption_uncompensated  # noqa: SLF001
     )
