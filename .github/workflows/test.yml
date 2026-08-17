@@ -25,7 +25,7 @@ jobs:
                   enable-cache: true
 
             - name: Set up nox
-              uses: wntrblm/nox@2026.04.10
+              uses: wntrblm/nox@2026.08.10
 
             - name: Install dependencies
               run: nox --install-only --verbose
