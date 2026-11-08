@@ -74,7 +74,7 @@ async def async_setup_entry(
 
 
 class _BaseConsumptionEntity(EnocooEntity, SensorEntity):
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         id_segment: str,
         name_in_dashboard: str,

@@ -1,6 +1,6 @@
 {
     "name": "enocoo",
     "hide_default_branch": true,
-    "homeassistant": "2026.6.1",
+    "homeassistant": "2026.11.0",
     "render_readme": true
 }

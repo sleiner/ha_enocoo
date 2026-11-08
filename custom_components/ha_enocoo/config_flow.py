@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, override
 
-import voluptuous as vol
+import probatio as vol
 from homeassistant.config_entries import (
     SOURCE_REAUTH,
     ConfigEntry,
@@ -72,6 +72,9 @@ class EnocooFlowHandler(ConfigFlow, domain=DOMAIN):
                 },
             ),
             errors=_errors,
+            description_placeholders={
+                "repo_url": "https://github.com/sleiner/ha_enocoo"
+            },
         )
 
     async def _async_finalize(self, _errors: dict[str, str]) -> ConfigFlowResult | None:

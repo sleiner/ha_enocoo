@@ -591,7 +591,7 @@ class StatisticsInserter:
         else:
             earliest_month = months[earliest_month_idx]
             timestamps = await get_timestamps("month", earliest_month)
-            return sorted(timestamps)[0].date()
+            return min(timestamps).date()
 
     @staticmethod
     def __months_between(from_date: dt.date, to_date: dt.date) -> list[dt.date]:

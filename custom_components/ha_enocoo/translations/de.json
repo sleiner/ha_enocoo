@@ -11,7 +11,7 @@
                 }
             },
             "user": {
-                "description": "Für Hilfe bei der Konfiguration, siehe: https://github.com/sleiner/ha_enocoo",
+                "description": "Für Hilfe bei der Konfiguration, siehe: {repo_url}",
                 "data": {
                     "username": "Benutzername",
                     "password": "Passwort",
