@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, override
 
-import voluptuous as vol
+import probatio as vol
 from homeassistant.config_entries import (
     SOURCE_REAUTH,
     ConfigEntry,
