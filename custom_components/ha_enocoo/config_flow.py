@@ -72,6 +72,9 @@ class EnocooFlowHandler(ConfigFlow, domain=DOMAIN):
                 },
             ),
             errors=_errors,
+            description_placeholders={
+                "repo_url": "https://github.com/sleiner/ha_enocoo"
+            },
         )
 
     async def _async_finalize(self, _errors: dict[str, str]) -> ConfigFlowResult | None:
