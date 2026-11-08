@@ -6,7 +6,7 @@ authors = [{ name = "Simon Leiner", email = "simon@leiner.me" }]
 requires-python = ">=3.14.2"
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = ["async-lru>=2.4.0", "oocone==0.6.5"]
+dependencies = ["async-lru>=2.4.0", "oocone==0.7.0"]
 
 [build-system]
 requires = ["uv_build>=0.11.19,<0.12"]
